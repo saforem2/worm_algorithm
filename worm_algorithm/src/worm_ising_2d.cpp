@@ -42,9 +42,9 @@ int main()
     double T;
     double seed;
     int write_obs;
-    FILE *in_file = fopen("input.dat","r");
+    FILE *in_file = fopen("../data/setup/input.txt","r");
     if (in_file == NULL ){
-        printf("Error! Could not open input file (input.dat: L, T, nsteps)\n");
+        printf("Error! Could not open input file (input.txt: L, T, nsteps)\n");
         return 2;
     }
     fscanf(in_file,"%i %lf %li %lf %i", &L, &T, &nsteps, &seed, &write_obs);
@@ -68,10 +68,13 @@ int main()
     std::string L_str = std::to_string(L);
     std::string T_str_sub = T_str.substr(0,5);
 
-    std::string bonds_path = std::string("./bonds/") + L_str +
-      std::string("_bonds/") + T_str_sub +
-      std::string("_bond") + std::string(".txt");
+    std::string bonds_path = std::string("../data/bonds/lattice_") + L_str 
+      + std::string("/bonds_") + T_str_sub + std::string(".txt");
+      // std::string("_bonds/") + T_str_sub +
+      // std::string("_bond") + std::string(".txt");
 
+    std::string num_bonds_path = std::string("../data/num_bonds/lattice_")
+      + L_str + std::string("/num_bonds_") + L_str + std::string(".txt");
     // std::string therm_params_path = std::string("DATA/thermalized_params/")
     //    + std::string("lattice_") + L_str + std::string("/params_")
     //    + T_str_sub + std::string("_.txt");
@@ -79,12 +82,12 @@ int main()
     // std::string therm_bonds_path = std::string("./bonds/") + L_str +
     //   std::string("_bonds_thermalized/") + T_str_sub +
     //   std::string("_bond") + std::string(".txt");
-    //
-    std::string observables_path = std::string("DATA/OBSERVABLES/lattice_")
-      + L_str + std::string("/observables_") + L_str + std::string("_.txt");
 
-    std::string num_bonds_path = std::string("DATA/num_bonds/lattice_")
-      + L_str + std::string("num_bonds_") + L_str + std::string(".txt");
+    // std::string observables_path = std::string("../data/observables/")
+    //   + std::string("lattice_") + L_str + std::string("/observables_") + L_str
+    //   + std::string(".txt");
+      // + L_str + std::string("/observables_") + L_str + std::string("_.txt");
+
 
     // build site->x and site->y tables
     int x[N], y[N];
@@ -205,26 +208,26 @@ int main()
     Nb_av = Nb_tot / (Z * N);
 
     // print output
-    FILE *out_file = fopen("output.dat","w");
+    FILE *out_file = fopen("../data/setup/output.txt","w");
     fprintf(out_file, "%4i %.12f %.12f %.12lf %.12lf %.12lf %lu\n",
             L, T, K, Z_av, E_av, Nb_av, step_num);
         //Nb_tot * T / (Z * N * 1.0));
     fclose(out_file);
 
+    std::ofstream num_bonds_out;
+    num_bonds_out.open(num_bonds_path, std::ofstream::app);
+    num_bonds_out << L << " " << T << " " << Nb << "\n";
+    num_bonds_out.close();
     // append observables to observables file
-    if (write_obs)
-    {
-      std::ofstream observables_out;
-      observables_out.open(observables_path, std::ofstream::app);
-      observables_out << L << "," << T << "," << K << "," << Z_av << ","
-        << E_av << "," << Nb_av << ","
-        << Nb_tot  << "," << step_num << std::endl;
-      observables_out.close();
-      std::ofstream num_bonds_out;
-      num_bonds_out.open(num_bonds_path, std::ofstream::app);
-      num_bonds_out << L << ", " << T << ", " << Nb << "\n";
-      num_bonds_out.close();
-    }
+    // if (write_obs)
+    // {
+    //   std::ofstream observables_out;
+    //   observables_out.open(observables_path, std::ofstream::app);
+    //   observables_out << L << " " << T << " " << K << " " << Z_av << " "
+    //     << E_av << " " << Nb_av << " "
+    //     << Nb_tot  << " " << step_num << std::endl;
+    //   observables_out.close();
+    // }
 
     // save thermalized quantities for next run
     // std::ofstream therm_params_out;
