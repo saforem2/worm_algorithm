@@ -16,11 +16,7 @@ class WormSimulation(object):
     simulation, and uses file I/O to gather physically important quantities.
     """
     def __init__(self, L=32, run=True, num_steps=1E7, verbose=True,
-                T_start=1., T_end=3.5, T_step=0.1, write_obs=True):
-        if write_obs:
-            self._write_obs_flag = 1
-        else:
-            self._write_obs_flag = 0
+                T_start=1., T_end=3.5, T_step=0.1):
         self._L = L
         self._verbose = verbose
         self._sim_dir = os.getcwd()
@@ -37,6 +33,9 @@ class WormSimulation(object):
         self._num_bonds_dir = '../data/num_bonds/lattice_{}/'.format(L)
         if not os.path.exists(self._num_bonds_dir):
             os.makedirs(self._num_bonds_dir)
+        self._bond_map_dir = '../data/bond_map/lattice_{}/'.format(L)
+        if not os.path.exists(self._bond_map_dir):
+            os.makedirs(self._bond_map_dir)
         if self._run:
             self.make()
             self.remove_old_data()
@@ -51,8 +50,8 @@ class WormSimulation(object):
         try:
             self._input_file = '../data/setup/input.txt'
             with open(self._input_file, 'w') as f:
-                f.write("%i %.12f %i %.32f %r\n" % (
-                    self._L, T, self._num_steps, seed, self._write_obs_flag
+                f.write("%i %.12f %i %.32f\n" % (
+                    self._L, T, self._num_steps, seed
                 ))
         except IOError:
             raise "Unable to locate input file in {}".format(setup_dir)
@@ -195,9 +194,6 @@ def main(argv):
     parser.add_argument("-p", "--power", type=int,
                         help=("Set the exponent for the number of steps to"
                               "take for MC sim, 10 ** pow (DEFAULT: 6)"))
-    parser.add_argument("-o", "--observables", action="store_true",
-                        help=("Write observables out to text file. (DEFAULT:"
-                              "True)"))
     parser.add_argument("-T0", "--Tstart", type=float,
                         help = ("Starting temperature for simulation."
                                 "(float) (DEFAULT: T_start=1.0)"))
@@ -218,7 +214,6 @@ def main(argv):
         num_steps = 1E7
     
     run = args.run_sim
-    obs_flag = args.observablee
     verbose = args.verbose
     
     T_start = args.Tstart
@@ -235,8 +230,7 @@ def main(argv):
 
     print("Initializing simulation...\n")
     sim = WormSimulation(L, run=run, num_steps=num_steps, verbose=verbose,
-                         T_start=T_start, T_end=T_end, T_step=T_step,
-                         write_obs=obs_flag)
+                         T_start=T_start, T_end=T_end, T_step=T_step)
     print('done.\n')
 
 

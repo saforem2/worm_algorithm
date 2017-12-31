@@ -20,7 +20,9 @@
 #include <stdlib.h>
 #include "mt19937ar.c"
 
-int bond_number(int i1, int i2, int *x, int *y, int L);
+std::tuple<int, int, int, int, int> bond_number(
+    int i1, int i2, int *x, int *y, int L
+);
 //std::vector<int> bonds_history;
 //std::vector<int> head_history;
 
@@ -41,13 +43,13 @@ int main()
     unsigned long int nsteps;
     double T;
     double seed;
-    int write_obs;
+    // int write_obs;
     FILE *in_file = fopen("../data/setup/input.txt","r");
     if (in_file == NULL ){
         printf("Error! Could not open input file (input.txt: L, T, nsteps)\n");
         return 2;
     }
-    fscanf(in_file,"%i %lf %li %lf %i", &L, &T, &nsteps, &seed, &write_obs);
+    fscanf(in_file,"%i %lf %li %lf", &L, &T, &nsteps, &seed);
     fclose(in_file);
 
     init_genrand(seed);
@@ -62,18 +64,22 @@ int main()
     double E_av = 0.0;
     double Z_av = 0.0;
     double Nb_av = 0.0;
+    int bond_num, x1, x2, y1, y2;
 
     std::setprecision(2);
     std::string T_str = std::to_string(T);
     std::string L_str = std::to_string(L);
     std::string T_str_sub = T_str.substr(0,5);
 
-    std::string bonds_path = std::string("../data/bonds/lattice_") + L_str 
+    std::string bond_map_dir = std::string("../data/bond_map/lattice_")
+      + L_str + std::string("/bond_map_") + L_str + std::string(".txt");
+
+    std::string bonds_dir = std::string("../data/bonds/lattice_") + L_str 
       + std::string("/bonds_") + T_str_sub + std::string(".txt");
       // std::string("_bonds/") + T_str_sub +
       // std::string("_bond") + std::string(".txt");
 
-    std::string num_bonds_path = std::string("../data/num_bonds/lattice_")
+    std::string num_bonds_dir = std::string("../data/num_bonds/lattice_")
       + L_str + std::string("/num_bonds_") + L_str + std::string(".txt");
     // std::string therm_params_path = std::string("DATA/thermalized_params/")
     //    + std::string("lattice_") + L_str + std::string("/params_")
@@ -160,7 +166,7 @@ int main()
       }
       // shift move -- start
       new_head = nbr[head][(int)floor(genrand() * 4)];
-      ibond = bond_number(head, new_head, x, y, L);
+      std::tie(ibond, x1, x2, y1, y2) = bond_number(head, new_head, x, y, L);
       nb = bonds[ibond];
       if (genrand() < 0.5)
       {
@@ -183,13 +189,25 @@ int main()
     } // end MC loop
 
     std::ofstream bonds_out;
-    bonds_out.open(bonds_path);
-
+    bonds_out.open(bonds_dir);
     for (int b=0; b < N * 2; b++)
     {
-      bonds_out << b << ", " << bonds[b] << std::endl;
+      bonds_out << b << " " << bonds[b] << std::endl;
     }
     bonds_out.close();
+
+    std::ofstream bonds_map_out;
+    bonds_map_out.open(bond_map_dir);
+    for (int i = 0; i < N; ++i) {
+      for (int j = 0; j < 4; ++j) {
+        int neighbor = nbr[i][j];
+        std::tie(bond_num, x1, x2, y1, y2) = bond_number(i, neighbor, x, y, L);
+        bonds_map_out << bond_num << " " << x1 << " " << y1 << " " << x2 << " "
+          << y2 << std::endl;
+      }
+    }
+
+
     //heads_out.close();
     //
     //
@@ -215,7 +233,7 @@ int main()
     fclose(out_file);
 
     std::ofstream num_bonds_out;
-    num_bonds_out.open(num_bonds_path, std::ofstream::app);
+    num_bonds_out.open(num_bonds_dir, std::ofstream::app);
     num_bonds_out << L << " " << T << " " << Nb << "\n";
     num_bonds_out.close();
     // append observables to observables file
@@ -258,32 +276,34 @@ int main()
  * @return bond_number: Integer specifying index of bond connecting the sites
  * i1, i2.
  */
-int bond_number(int i1, int i2, int *x, int *y, int L)
+std::tuple<int, int, int, int, int> bond_number(
+    int i1, int i2, int *x, int *y, int L
+)
 {
   int x1 = x[i1], x2 = x[i2], y1 = y[i1], y2 = y[i2];
   if (y1 == y2)
   {
       if (x2 == x1 + 1)
-        return 2 * i1;
+        return std::make_tuple(2 * i1, x1, x2, y1, y2);
       else if (x1 == x2 + 1)
-        return 2 * i2;
+        return std::make_tuple(2 * i2, x1, x2, y1, y2);
       else if (x1 == L - 1)
-        return 2 * i1;
+        return std::make_tuple(2 * i1, x1, x2, y1, y2);
       else if (x2 == L - 1)
-        return 2 * i2;
+        return std::make_tuple(2 * i2, x1, x2, y1, y2);
   }
   else if (x1 == x2)
   {
       if (y2 == y1 + 1)
-        return 2 * i1 + 1;
+        return std::make_tuple(2 * i1 + 1, x1, x2, y1, y2);
       else if (y1 == y2 + 1)
-        return 2 * i2 + 1;
+        return std::make_tuple(2 * i2 + 1, x1, x2, y1, y2);
       else if (y1 == L - 1)
-        return 2 * i1 +1;
+        return std::make_tuple(2 * i1 +1, x1, x2, y1, y2);
       else if (y2 == L - 1)
-        return 2 * i2 + 1;
+        return std::make_tuple(2 * i2 + 1, x1, x2, y1, y2);
   }
   // if you got here, something went wrong
   printf("ERROR!\n");
-  return 2 * L * L + 1;
+  return std::make_tuple(2 * L * L + 1, 0, 0, 0, 0);
 }
