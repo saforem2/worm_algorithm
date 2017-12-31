@@ -24,13 +24,18 @@ class Bonds(WormSimulation):
         self._L = L
         self._verbose = verbose
         self._bonds_dir = '../data/bonds/lattice_{}/'.format(self._L)
+        #  if not os.path.exists(self._bonds_dir):
+        #      os.makedirs(self._bonds_dir)
         self._bond_map_dir = '../data/bond_map/lattice_{}/'.format(self._L)
+        #  if not os.path.exists(self._bond_map_dir):
+        #      os.makedirs(self._bond_map_dir)
         self.__map_file = self._bond_map_dir + 'bond_map_{}.txt'.format(L)
         self._map = self._get_map()
         self._dict = self._get_bonds()
         self._mapped_bonds = self._map_bonds()
-        self._active_x_bonds, self._active_y_bonds = self._get_active_bonds()
-        self._active_bonds = {}
+        tup = self._get_active_bonds()
+        self._active_bonds, self._active_x_bonds, self._active_y_bonds = tup
+        #  self._active_bonds = {}
         self._x_bonds = {}
         self._y_bonds = {}
         self._config_data = {}
@@ -123,53 +128,39 @@ class Bonds(WormSimulation):
         return _mapped_bonds
 
     def _get_active_bonds(self):
-        """
-        Extract and return active bonds on the lattice. 
+        """ 
+        Split active bonds into x_bonds and y_bonds.
 
         Returns:
-            _active_bonds (dict): Dictionary with attributes:
-                _dict.keys(): Temperature (string)
-                _dict.values(): np.array of [(start_site), (end_site), value]
-
-        Note:
-            _active_bonds has the same structure as self._mapped_bonds, except
-            only contains bonds with are active.
+            x_bonds, y_bonds (dict, dict): With temperature (string) keys.
         """
-        _active_x_bonds = {}
-        _active_y_bonds = {}
-        for temp in self._mapped_bonds.keys():
-            mapped_bonds = np.array(self._mapped_bonds[temp])
-            act_x = []
-            act_y = []
-            for i in mapped_bonds:
-                sites = sorted(i[0])
-                start_site = np.array(sites[0], dtype=int)
-                end_site = np.array(sites[1], dtype=int)
-                diff = end_site - start_site
+        active_bonds = {}
+        for key, val in self._mapped_bonds.items():
+            active_bonds[key] = []
+            for i in val:
                 if i[1] % 2 == 1:
-                    if diff[0] == 0:
-                        if abs(start_site[1] - end_site[1]) < self._L - 2:
-                            act_y.append(sorted([
-                                tuple(start_site), tuple(end_site)
-                            ]))
-                        elif abs(start_site[1] - end_site[1]) >= self._L - 2:
-                            if start_site[1] == 0:
-                                act_y.append(sorted([
-                                    tuple(start_site), tuple(end_site)
-                                ]))
-                    if diff[1] == 0:
-                        if abs(start_site[0] - end_site[0]) < self._L - 2:
-                            act_x.append(sorted([
-                                tuple(start_site), tuple(end_site)
-                            ]))
-                        elif abs(start_site[0] - end_site[0]) >= self._L -2:
-                            if start_site[0] == 0:
-                                act_x.append(sorted([
-                                    tuple(start_site), tuple(end_site)
-                                ]))
-            _active_x_bonds[temp] = act_x
-            _active_y_bonds[temp] = act_y
-        return _active_x_bonds, _active_y_bonds
+                    active_bonds[key].append(i[0])
+                    #  except KeyError:
+                    #      active_bonds[key] = [i[0]]
+                #  else:
+                #      active_bonds[key] = []
+
+        x_bonds = {}
+        y_bonds = {}
+        for key, val in active_bonds.items():
+            x_sites = []
+            y_sites = []
+            for site in val:
+                start_site = np.array(site[0])
+                end_site = np.array(site[1])
+                diff = abs(start_site - end_site)
+                if diff[0] in [1, self._L - 1]:
+                    x_sites.append(sorted(tuple(site)))
+                elif diff[1] in [1, self._L - 1]:
+                    y_sites.append(sorted(tuple(site)))
+            x_bonds[key] = np.array(x_sites, dtype=int).tolist()
+            y_bonds[key] = np.array(y_sites, dtype=int).tolist()
+        return active_bonds, x_bonds, y_bonds
 
     def _set_config_data(self, T):
         """ Remap bonds data from array with shape [1, 2*L*L] to an array with
@@ -181,6 +172,8 @@ class Bonds(WormSimulation):
         """
         if type(T) is not str:
             T = str(T)
+        #  import pdb
+        #  pdb.set_trace()
         xb = self._active_x_bonds[T]  # x_bonds
         yb = self._active_y_bonds[T]  # y_bonds
         xbl = [[list(i[0]), list(i[1])] for i in xb]  # x_bonds_list
@@ -207,8 +200,8 @@ class Bonds(WormSimulation):
                 y_mapped = bond[0][1] + bond[1][1]
                 x_mapped_bonds.append([x_mapped, y_mapped])
             for site in bond:
-                start_site = 2 * site[0]
-                end_site = 2 * site[1]
+                start_site = site[0] + site[0]
+                end_site = site[1] + site[1]
                 sites.append([start_site, end_site])
             x_mapped_sites.append(sites)
         x_mapped_sites = np.array(x_mapped_sites, dtype=int)
@@ -239,7 +232,7 @@ class Bonds(WormSimulation):
             mapped_arr[bond[0], bond[1]] = 1
         for site in x_mapped_sites:
             mapped_arr[site[0][0], site[0][1]] = 1
-            mapped_arr[site[1][0], site[1][1]] = 0
+            mapped_arr[site[1][0], site[1][1]] = 1
 
         for bond in y_mapped_bonds:
             mapped_arr[bond[0], bond[1]] = 1
@@ -380,12 +373,15 @@ class Bonds(WormSimulation):
                 plt.show()
         elif mode=='pca':
             plt.clf()
-            fig = plt.figure()
+            fig, ax = plt.subplots()
+            major_ticks = np.arange(0, self._L, 2)
+            ax.set_xticks(major_ticks)
+            ax.set_yticks(major_ticks)
             pca_data = np.array(self._config_data[str(T)]).reshape(2*self._L,
                                                                    2*self._L).T
             plt.imshow(pca_data, cmap='binary')
-            plt.xlim((-0.2, 2*self._L))
-            plt.ylim((-0.2, 2*self._L))
+            plt.xlim((0, 2*self._L-1))
+            plt.ylim((0, 2*self._L-1))
             if save:
                 if save_dir is None:
                     save_dir = (
