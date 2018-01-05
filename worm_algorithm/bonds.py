@@ -4,6 +4,7 @@ import os
 import sys
 import argparse
 import getopt
+from operator import xor
 
 import pandas as pd
 import numpy as np
@@ -13,16 +14,15 @@ from worm_simulation import WormSimulation
 
 class Bonds(WormSimulation):
     """
-    Bonds class used for mapping and storing equilibrium configurations as
+    Lattice class used for mapping and storing equilibrium configurations as
     vectors which can be interpreted as two-dimensional greyscale images.
     """
     def __init__(self, L, run=False, num_steps=1E7, verbose=True,
-                 T_start=1., T_end=3.5, T_step=0.1, write=True):
-        if run:
-            WormSimulation.__init__(self, L, run, num_steps, verbose,
-                                    T_start, T_end, T_step)
+                 T_start=1., T_end=3.5, T_step=0.1, 
+                 block_val=0, write=True, write_blocked=True):
+        WormSimulation.__init__(self, L, run, num_steps, verbose,
+                                T_start, T_end, T_step)
         self._L = L
-        self._verbose = verbose
         self._bonds_dir = '../data/bonds/lattice_{}/'.format(self._L)
         #  if not os.path.exists(self._bonds_dir):
         #      os.makedirs(self._bonds_dir)
@@ -38,14 +38,13 @@ class Bonds(WormSimulation):
         #  self._active_bonds = {}
         self._x_bonds = {}
         self._y_bonds = {}
-        self._config_data = {}
-        #  self.get_map()
-        #  self.get_bonds()
-        #  self.map_bonds()
-        #  self.get_active_bonds()
-        self.set_config_data()
+        self._config_data = self.set_config_data()
+        self._blocked_config_data = self.block_configs(block_val)
+        #  self._blocked_configs = self.block
         if write:
             self.write_config_data()
+        if write_blocked:
+            self.write_blocked_config_data()
 
     def _get_raw_bonds(self):
         """ Read in raw bond/site data.
@@ -239,13 +238,98 @@ class Bonds(WormSimulation):
         for site in y_mapped_sites:
             mapped_arr[site[0][0], site[0][1]] = 1
             mapped_arr[site[1][0], site[1][1]] = 1
-        
         return mapped_arr
 
     def set_config_data(self):
         """ Remap data for all T using _set_config_data. """
+        config_data = {}
         for key in self._dict.keys():
-            self._config_data[key] = self._set_config_data(key)
+            config_data[key] = self._set_config_data(key)
+        return config_data
+    
+    def _block_config_T(self, T, block_val):
+        """ Block individual configuration (at temp T).
+
+        By `block` we mean implement a renormalization group `coarse graining`
+        transformation to the worm configuration, where groups of four sites
+        are blocked into a single site in the blocked configuration. To deal
+        with the `double bonds` (defined as the case when two bonds exit a
+        given block in the original lattice) we include a parameter `block_val`
+        that assigns a weight to these double bonds when constructing the
+        blocked configuration. 
+
+        If block_val is 0, we call this method `approximate` blocking, which
+        has the advantage of maintaining closed-path configurations in the
+        blocked configuration, but often loses information about the bonds in
+        the original configuration. Additionally, this method is able to be
+        performed iteratively. 
+
+        Conversely, if block_val is not 0, we no longer maintain the
+        closed-loop configuration under blocking, but we more accurately
+        represent the original configuration. 
+
+        Args:
+            T (float or str): 
+                If T is a float, re-cast it as a string (removing trailing
+                zeros) to be used as a key in self._config_data dictionary
+                which stores the equilibrium configurations resulting from the
+                worm algorithm.
+            block_val (int): 
+                Value given to double bonds when constructing the blocked
+                configuration. 
+
+        Returns:
+            blocked_config (aray-like): 
+                If self._config_data['T'] is of shape [2L, 2L], blocked_config
+                is an array of shape [L, L], representing the configuration
+                after having performed a single renormalization group
+                `blocking` iteration.
+        """
+        if type(T) is not str:
+            T = str(T).rstrip('0')
+        config = np.array(self._config_data[T]).reshape(2*self._L, 2*self._L)
+        blocked_config = np.zeros((self._L, self._L), dtype=int)
+        blocked_sites = [
+            (2*i, 2*j) for i in range(self._L//2) for j in range(self._L//2)
+        ]
+        for site in blocked_sites:
+            i = site[0]
+            j = site[1]
+            ext_x_bonds = [config[2*i, 2*j+3], config[2*i+2, 2*j+3]]
+            ext_y_bonds = [config[2*i+3, 2*j], config[2*i+3, 2*j+2]]
+            ext_x_bonds_active = xor(ext_x_bonds[0], ext_x_bonds[1])
+            ext_y_bonds_active = xor(ext_y_bonds[0], ext_y_bonds[1])
+            active_site = ext_x_bonds_active or ext_y_bonds_active
+            blocked_config[i, j] = active_site
+            blocked_config[i, j+1] = ext_x_bonds_active
+            blocked_config[i+1, j] = ext_y_bonds_active
+            if block_val != 0:
+                if ext_x_bonds == [1, 1]:
+                    blocked_config[i, j] = block_val
+                    blocked_config[i, j+1] = block_val
+                if ext_y_bonds == [1, 1]:
+                    blocked_config[i, j] = block_val
+                    blocked_config[i+1, j] = block_val
+
+        for site in blocked_sites:
+            i = site[0]
+            j = site[1]
+            x_site = blocked_config[i, j-1]
+            y_site = blocked_config[i-1, j]
+            if x_site == 1 or y_site == 1:
+                blocked_config[site] = 1
+            if block_val != 0:
+                if x_site == block_val or y_site == block_val:
+                    blocked_config[site] = block_val
+        return blocked_config
+    
+    def block_configs(self, block_val=0):
+        blocked_configs = {}
+        blocked_configs[block_val] = {}
+        for key, val in self._config_data.items():
+            blocked_configs[block_val][key] = self._block_config_T(key, 
+                                                                   block_val)
+        return blocked_configs
 
     def write_config_data(self, data_dir=None):
         """ Save configuration data to be used for later analysis. 
@@ -266,16 +350,58 @@ class Bonds(WormSimulation):
         if not os.path.exists(config_dir):
             os.makedirs(config_dir)
 
+        print("Saving configs to: {}".format(config_dir))
         for key, val in self._config_data.items():
-            self._config_data[key] = (
-                np.array(val).reshape(1, -1).tolist()[0]
-            )
-            config_file = config_dir
+            #  self._config_data[key] = (
+            #      np.array(val).reshape(1, -1).tolist()[0]
+            #  )
+            #  config_file = config_dir
             fn = config_dir + '{}_config_{}.txt'.format(self._L, float(key))
             with open(fn, "a") as f:
                 f.write('{} {}\n'.format(
                     float(key), ' '.join([str(i) for i in val.flatten()])
                 ))
+
+    def write_blocked_config_data(self, data_dir=None, blocked_configs=None):
+        """ Save blocked configuration data to be used for later analysis.
+
+        Args:
+            data_dir (str): Path to directory for saving blocked configuration
+                data.
+            block_val (int): Value for double bonds, same as key of
+                self._blocked_config_data.
+
+        Returns:
+            None
+        """
+        if blocked_configs is None:
+            configs = self._blocked_config_data
+            block_val = list(configs.keys())[0]
+        else:
+            configs = blocked_configs
+            block_val = list(configs.keys())[0]
+        if data_dir is None:
+            config_dir = (
+                '../data/blocked_configs/{}_lattice/double_bonds_{}/'.format(
+                    self._L, block_val
+                )
+            )
+        else:
+            config_dir = data_dir
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir)
+        try:
+            print("Saving blocked configs to: {}".format(config_dir))
+            for key, val in configs[block_val].items():
+                config_file = config_dir + '{}_config_{}.txt'.format(self._L,
+                                                                     float(key))
+                with open(config_file, "a") as f:
+                    f.write('{} {}\n'.format(
+                        float(key), ' '.join([str(i) for i in val.flatten()])
+                    ))
+        except KeyError:
+            raise ("Block val of blocked configs is not the same as "
+                   "{}. Exiting. ".format(block_val))
     
     def plot_config(self, T, mode=None, show=True, save=False, save_dir=None):
         """ Generate plot of worm configuration.
