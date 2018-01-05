@@ -12,7 +12,6 @@ worm_algorithm/src/worm_ising_2d
 docs/latex/*
 
 *tags
-*.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
