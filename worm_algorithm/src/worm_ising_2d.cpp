@@ -39,17 +39,17 @@ int main()
 
     //read parameters from the input file
     int L;
-    //unsigned long int nsteps;
-    unsigned long int nsteps;
+    //unsigned long int num_steps;
+    unsigned long int num_steps;
     double T;
     double seed;
     // int write_obs;
     FILE *in_file = fopen("../data/setup/input.txt","r");
     if (in_file == NULL ){
-        printf("Error! Could not open input file (input.txt: L, T, nsteps)\n");
+        printf("Error! Could not open input file (input.txt: L, T, num_steps)\n");
         return 2;
     }
-    fscanf(in_file,"%i %lf %li %lf", &L, &T, &nsteps, &seed);
+    fscanf(in_file,"%i %lf %li %lf", &L, &T, &num_steps, &seed);
     fclose(in_file);
 
     init_genrand(seed);
@@ -61,6 +61,8 @@ int main()
     int tail = 0, head = 0, new_head;
     int nb, ibond, delta_nb, Nb = 0, Nb_tot = 0;
     unsigned long int step_num = 0, Z = 0;
+    unsigned long int therm_steps = num_steps / 50;
+    unsigned long int write_steps = 1000;
     double E_av = 0.0;
     double Z_av = 0.0;
     double Nb_av = 0.0;
@@ -71,16 +73,19 @@ int main()
     std::string L_str = std::to_string(L);
     std::string T_str_sub = T_str.substr(0,5);
 
-    std::string bond_map_dir = std::string("../data/bond_map/lattice_")
+    std::string bond_map_file = std::string("../data/bond_map/lattice_")
       + L_str + std::string("/bond_map_") + L_str + std::string(".txt");
 
-    std::string bonds_dir = std::string("../data/bonds/lattice_") + L_str 
+    std::string bonds_file = std::string("../data/bonds/lattice_") + L_str 
       + std::string("/bonds_") + T_str_sub + std::string(".txt");
       // std::string("_bonds/") + T_str_sub +
       // std::string("_bond") + std::string(".txt");
 
-    std::string num_bonds_dir = std::string("../data/num_bonds/lattice_")
+    std::string num_bonds_file = std::string("../data/num_bonds/lattice_")
       + L_str + std::string("/num_bonds_") + L_str + std::string(".txt");
+
+    std::string observables_file = std::string("../data/observables/lattice_")
+      + L_str + std::string("/observables_") + L_str + std::string(".txt");
     // std::string therm_params_path = std::string("DATA/thermalized_params/")
     //    + std::string("lattice_") + L_str + std::string("/params_")
     //    + T_str_sub + std::string("_.txt");
@@ -153,51 +158,70 @@ int main()
 
     // int step_num = 0;
     // main Monte Carlo loop
-    while(1)
-    {
-      if (tail == head)
-      {
+    while(1) {
+      if (tail == head) {
         tail = (int)floor(genrand() * N);   // randomly choose new head, tail
         head = tail;
         Z += 1;   // new kick
         Nb_tot -= Nb;   // remove Nb bonds from previous worm configuration
-        if (step_num >= nsteps)
+        if (step_num > therm_steps) {
+          if (step_num % write_steps == 0) {
+            Z_av = Z / (step_num * 1.0);
+            E_av = Nb_tot * T / (Z * N);
+            Nb_av = Nb_tot / (Z * N);
+            std::ofstream observables_out;
+            observables_out.open(observables_file, std::ofstream::app);
+            observables_out << T << " " << E_av << " " << Z_av << " " 
+              << Nb_av << " " << step_num << std::endl;
+            observables_out.close();
+          }
+
+          if (step_num % write_steps == 0) {
+            std::ofstream bonds_out;
+            bonds_out.open(bonds_file, std::ofstream::app);
+
+            for (int b=0; b < N * 2; b++) {
+              bonds_out << b << " " << bonds[b] << std::endl;
+            }
+            bonds_out.close();
+          }
+        }
+        if (step_num >= num_steps)
           break;
       }
+      
       // shift move -- start
       new_head = nbr[head][(int)floor(genrand() * 4)];
       std::tie(ibond, x1, x2, y1, y2) = bond_number(head, new_head, x, y, L);
       nb = bonds[ibond];
-      if (genrand() < 0.5)
-      {
+      
+      if (genrand() < 0.5) {
         delta_nb = 1;
         P_acc = K / (nb + 1.0);
       }
-      else
-      {
+      
+      else {
         delta_nb = - 1;
         P_acc = nb * inv_K;
       }
-      if (genrand() < P_acc)
-      {
+      
+      if (genrand() < P_acc) {
         bonds[ibond] += delta_nb;
         Nb += delta_nb;
         head = new_head;
       }
-      ++step_num;
-      // shift move -- end
+    ++step_num; // shift move -- end
     } // end MC loop
 
     std::ofstream bonds_out;
-    bonds_out.open(bonds_dir);
-    for (int b=0; b < N * 2; b++)
-    {
+    bonds_out.open(bonds_file, std::ofstream::app);
+    for (int b=0; b < N * 2; b++) {
       bonds_out << b << " " << bonds[b] << std::endl;
     }
     bonds_out.close();
 
     std::ofstream bonds_map_out;
-    bonds_map_out.open(bond_map_dir);
+    bonds_map_out.open(bond_map_file);
     for (int i = 0; i < N; ++i) {
       for (int j = 0; j < 4; ++j) {
         int neighbor = nbr[i][j];
@@ -206,19 +230,7 @@ int main()
           << y2 << std::endl;
       }
     }
-
-
-    //heads_out.close();
-    //
-    //
-    // std::ofstream therm_bonds_out;
-    // therm_bonds_out.open(therm_bonds_path);
-    // for (int b=0; b < N * 2; b++)
-    // {
-    //   therm_bonds_out << b << " " << bonds[b] << std::endl;
-    // }
-    // therm_bonds_out.close();
-
+    bonds_map_out.close();
 
     Z_av = Z / (step_num * 1.0);
     //E_av = - 1.0 * tanh(K) * (2*L*L + (Nb_tot/(sinh(K)*sinh(K))));
@@ -233,7 +245,7 @@ int main()
     fclose(out_file);
 
     std::ofstream num_bonds_out;
-    num_bonds_out.open(num_bonds_dir, std::ofstream::app);
+    num_bonds_out.open(num_bonds_file, std::ofstream::app);
     num_bonds_out << L << " " << T << " " << Nb << "\n";
     num_bonds_out.close();
     // append observables to observables file
