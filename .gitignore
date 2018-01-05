@@ -1,4 +1,5 @@
 data/*
+worm_algorithm/src/worm_ising_2d
 
 *.pyc
 *.tex
