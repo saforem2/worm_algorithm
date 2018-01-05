@@ -123,52 +123,52 @@ class WormSimulation(object):
                 run_number += 1
             except (IOError, OSError):
                 raise "Unable to find {}".format(self._output_file)
-        try: 
-            observables_file = (
-                self._observables_dir
-                + 'observables_{}.txt'.format(self._L)
-            )
-            observables_header = (
-                self._observables_dir + 'observables_header.txt'
-            )
-            observables_description = (
-                self._observables_dir + 'observables_description.txt'
-            )
-
-            if not os.path.isfile(observables_header):
-                with open(observables_header, 'w') as f:
-                    f.write('_T _beta _Z _E _Nb')
-            if not os.path.isfile(observables_description):
-                with open(observables_description, 'w') as f:
-                    f.write(
-                        "_T: Temperature of simulation\n"
-                        + "_beta: Inverse temperature of simulation\n"
-                        + "_Z: Number of times head==tail / number of steps\n"
-                        + "_E: Averaged energy of simulation\n"
-                        + "_Nb: Number of active bonds during simulation." 
-                    )
-            if os.path.isfile(observables_file):
-                with open(observables_file, 'a') as f:
-                    for key in self._E.keys():
-                        f.write('{} {} {} {} {}\n'.format(
-                            key,
-                            self._beta[key],
-                            self._Z[key],
-                            self._E[key],
-                            self._Nb[key]
-                        ))
-            else:
-                with open(observables_file, 'w') as f:
-                    for key in self._E.keys():
-                        f.write('{} {} {} {} {}\n'.format(
-                            key,
-                            self._beta[key],
-                            self._Z[key],
-                            self._E[key],
-                            self._Nb[key]
-                        ))
-        except (IOError, OSError):
-            raise "Unable to locate {}".format(observables_file)
+        #  try:
+        #      observables_file = (
+        #          self._observables_dir
+        #          + 'observables_{}.txt'.format(self._L)
+        #      )
+        #      observables_header = (
+        #          self._observables_dir + 'observables_header.txt'
+        #      )
+        #      observables_description = (
+        #          self._observables_dir + 'observables_description.txt'
+        #      )
+        #
+        #      if not os.path.isfile(observables_header):
+        #          with open(observables_header, 'w') as f:
+        #              f.write('_T _beta _Z _E _Nb')
+        #      if not os.path.isfile(observables_description):
+        #          with open(observables_description, 'w') as f:
+        #              f.write(
+        #                  "_T: Temperature of simulation\n"
+        #                  + "_beta: Inverse temperature of simulation\n"
+        #                  + "_Z: Number of times head==tail / number of steps\n"
+        #                  + "_E: Averaged energy of simulation\n"
+        #                  + "_Nb: Number of active bonds during simulation."
+        #              )
+        #      if os.path.isfile(observables_file):
+        #          with open(observables_file, 'a') as f:
+        #              for key in self._E.keys():
+        #                  f.write('{} {} {} {} {}\n'.format(
+        #                      key,
+        #                      self._beta[key],
+        #                      self._Z[key],
+        #                      self._E[key],
+        #                      self._Nb[key]
+        #                  ))
+        #      else:
+        #          with open(observables_file, 'w') as f:
+        #              for key in self._E.keys():
+        #                  f.write('{} {} {} {} {}\n'.format(
+        #                      key,
+        #                      self._beta[key],
+        #                      self._Z[key],
+        #                      self._E[key],
+        #                      self._Nb[key]
+        #                  ))
+        #  except (IOError, OSError):
+        #      raise "Unable to locate {}".format(observables_file)
     
     def clean(self):
         """ Remove 'input.txt', 'output.txt' files. """

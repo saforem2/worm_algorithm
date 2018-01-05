@@ -23,6 +23,7 @@ class Bonds(WormSimulation):
         WormSimulation.__init__(self, L, run, num_steps, verbose,
                                 T_start, T_end, T_step)
         self._L = L
+        self._num_bonds = 2*self._L*self._L
         self._bonds_dir = '../data/bonds/lattice_{}/'.format(self._L)
         #  if not os.path.exists(self._bonds_dir):
         #      os.makedirs(self._bonds_dir)
@@ -35,12 +36,10 @@ class Bonds(WormSimulation):
         self._mapped_bonds = self._map_bonds()
         tup = self._get_active_bonds()
         self._active_bonds, self._active_x_bonds, self._active_y_bonds = tup
-        #  self._active_bonds = {}
         self._x_bonds = {}
         self._y_bonds = {}
         self._config_data = self.set_config_data()
         self._blocked_config_data = self.block_configs(block_val)
-        #  self._blocked_configs = self.block
         if write:
             self.write_config_data()
         if write_blocked:
@@ -85,6 +84,9 @@ class Bonds(WormSimulation):
             sites = self._raw_bonds[i, 1:]
             start_site = sites[:2]
             end_site = sites[2:]
+            #  try:
+            #      _map[key].append([tuple(start_site), tuple(end_site)])
+            #  except KeyError:
             _map[key] = [tuple(start_site), tuple(end_site)]
         return _map
 
@@ -111,7 +113,23 @@ class Bonds(WormSimulation):
                 bonds = pd.read_csv(file, header=None, engine='c',
                                     delim_whitespace=True).values
                 key = temp_strings[idx]
-                _dict[key] = bonds
+                num_configs = bonds.shape[0] / self._num_bonds
+                split_configs = np.split(bonds, num_configs)
+                config_dict = {}
+                #for row in bonds[
+                for idx, config in enumerate(split_configs):
+                    bond_dict = {}
+                    for row in config:
+                        b_idx = row[0]
+                        bond_dict[b_idx] = row[1]
+                    config_dict[idx] = bond_dict
+                        #  try:
+                        #      bond_dict[site].append(row[1])
+                        #  except KeyError:
+                        #      bond_dict[site] = [row[1]]
+                _dict[key] = config_dict
+                    #  _dict[key].append(bonds)
+                    #  _dict[key] = bonds
         except OSError:
             raise "Unable to locate bond files. Exiting."
         return _dict
@@ -119,11 +137,24 @@ class Bonds(WormSimulation):
     def _map_bonds(self):
         """ Remap bond_dict. """
         _mapped_bonds = {}
-        for key, val in self._dict.items():
-            bond_sites = []
-            for i in range(len(val)):
-                bond_sites.append((self._map[val[i,0]], val[i,1]))
-            _mapped_bonds[key] = np.array(bond_sites)
+        for temp, config_dict in self._dict.items():
+            configs_mapped_bonds = {}
+            for config, row in config_dict.items():
+                bond_sites = []
+                for idx, val in row.items():
+                    bond_sites.append([self._map[idx], val])
+                configs_mapped_bonds[config] = np.array(bond_sites)
+            _mapped_bonds[temp] = configs_mapped_bonds
+
+            #  bond_sites = []
+            #  for key, val in bond_dict.items():
+            #      bond_sites.append([self._map[key], np.array(val)])
+            #  _mapped_bonds[temp] = np.array(bond_sites)
+        #  for key, val in self._dict.items():
+        #      bond_sites = []
+        #      for i in range(len(val)):
+        #          bond_sites.append((self._map[val[i,0]], val[i,1]))
+        #      _mapped_bonds[key] = np.array(bond_sites)
         return _mapped_bonds
 
     def _get_active_bonds(self):
@@ -134,34 +165,85 @@ class Bonds(WormSimulation):
             x_bonds, y_bonds (dict, dict): With temperature (string) keys.
         """
         active_bonds = {}
-        for key, val in self._mapped_bonds.items():
-            active_bonds[key] = []
-            for i in val:
-                if i[1] % 2 == 1:
-                    active_bonds[key].append(i[0])
-                    #  except KeyError:
-                    #      active_bonds[key] = [i[0]]
-                #  else:
-                #      active_bonds[key] = []
-
+        for temp, config_dict in self._mapped_bonds.items():
+            configs_active_bonds = {}
+            for config_idx, bond_arr in config_dict.items():
+                configs_active_bonds[config_idx] = []
+                for row in bond_arr:
+                    if row[1] % 2 == 1:
+                        configs_active_bonds[config_idx].append(row[0])
+                        active_bonds[temp] = configs_active_bonds
         x_bonds = {}
         y_bonds = {}
-        for key, val in active_bonds.items():
-            x_sites = []
-            y_sites = []
-            for site in val:
-                start_site = np.array(site[0])
-                end_site = np.array(site[1])
-                diff = abs(start_site - end_site)
-                if diff[0] in [1, self._L - 1]:
-                    x_sites.append(sorted(tuple(site)))
-                elif diff[1] in [1, self._L - 1]:
-                    y_sites.append(sorted(tuple(site)))
-            x_bonds[key] = np.array(x_sites, dtype=int).tolist()
-            y_bonds[key] = np.array(y_sites, dtype=int).tolist()
+        for temp, val in active_bonds.items():
+            configs_x_bonds = {}
+            configs_y_bonds = {}
+            for config_idx, config_bonds in val.items():
+                x_sites = []
+                y_sites = []
+                for site in config_bonds:
+                    start_site = np.array(site[0])
+                    end_site = np.array(site[1])
+                    diff = abs(start_site - end_site)
+                    if diff[0] in [1, self._L - 1]:
+                        x_sites.append(sorted(tuple(site)))
+                    elif diff[1] in [1, self._L - 1]:
+                        y_sites.append(sorted(tuple(site)))
+                configs_x_bonds[config_idx] = (
+                    np.array(x_sites, dtype=int).tolist()
+                )
+                configs_y_bonds[config_idx] = (
+                    np.array(y_sites, dtype=int).tolist()
+                )
+            x_bonds[temp] = configs_x_bonds
+            y_bonds[temp] = configs_y_bonds
+
+            
+        
+        #  active_bonds = {}
+        #  for key, val in self._mapped_bonds.items():
+        #      active_bonds[key] = []
+        #      for i in val:
+        #          #  if i[1] % 2 == 1:
+        #              config_idxs = np.where(i[1] % 2 == 1)
+        #              active_bonds[key].append([i[0], config_idxs])
+        #              #  except KeyError:
+        #              #      active_bonds[key] = [i[0]]
+        #          #  else:
+        #          #      active_bonds[key] = []
+        #
+        #  x_bonds = {}
+        #  y_bonds = {}
+        #  for key, val in active_bonds.items():
+        #      x_sites = []
+        #      y_sites = []
+        #      x_configs_sites_idxs = []
+        #      y_configs_sites_idxs = []
+        #      configs = [i[1] for i in val]
+        #      sites = [i[0] for i in val]
+        #      #  for site in val:
+        #      for idx, site in enumerate(sites):
+        #          start_site = np.array(site[0])
+        #          end_site = np.array(site[1])
+        #          diff = abs(start_site - end_site)
+        #          if diff[0] in [1, self._L - 1]:
+        #              x_sites.append(sorted(tuple(site)))
+        #              x_configs_sites_idxs.append(configs[idx])
+        #          elif diff[1] in [1, self._L - 1]:
+        #              y_sites.append(sorted(tuple(site)))
+        #              y_configs_sites_idxs.append(configs[idx])
+        #      x_bonds[key] = [
+        #          np.array(x_sites, dtype=int).tolist(), x_configs_sites_idxs
+        #      ]
+        #      y_bonds[key] = [
+        #          np.array(y_sites, dtype=int).tolist(), y_configs_sites_idxs
+        #      ]
+        #
+        #      #  x_bonds[key] = np.array(x_sites, dtype=int).tolist()
+        #      #  y_bonds[key] = np.array(y_sites, dtype=int).tolist()
         return active_bonds, x_bonds, y_bonds
 
-    def _set_config_data(self, T):
+    def _set_config_data(self, T, config_idx):
         """ Remap bonds data from array with shape [1, 2*L*L] to an array with
         shape [2L, 2L], which can be interpreted as a two-dimensional image of
         pixels.
@@ -173,8 +255,8 @@ class Bonds(WormSimulation):
             T = str(T)
         #  import pdb
         #  pdb.set_trace()
-        xb = self._active_x_bonds[T]  # x_bonds
-        yb = self._active_y_bonds[T]  # y_bonds
+        xb = self._active_x_bonds[T][config_idx]  # x_bonds
+        yb = self._active_y_bonds[T][config_idx]  # y_bonds
         xbl = [[list(i[0]), list(i[1])] for i in xb]  # x_bonds_list
         ybl = [[list(i[0]), list(i[1])] for i in yb]  # y_bonds_list
         #  for i in xb:
@@ -243,11 +325,16 @@ class Bonds(WormSimulation):
     def set_config_data(self):
         """ Remap data for all T using _set_config_data. """
         config_data = {}
-        for key in self._dict.keys():
-            config_data[key] = self._set_config_data(key)
+        for temp in self._dict.keys():
+            _config_data = {}
+            for config_idx in self._dict[temp].keys():
+                _config_data[config_idx] = self._set_config_data(temp,
+                                                                 config_idx)
+            config_data[temp] = _config_data
+            #config_data[key] = self._set_config_data(key)
         return config_data
     
-    def _block_config_T(self, T, block_val):
+    def _block_config_T(self, T, config_idx, block_val):
         """ Block individual configuration (at temp T).
 
         By `block` we mean implement a renormalization group `coarse graining`
@@ -287,7 +374,9 @@ class Bonds(WormSimulation):
         """
         if type(T) is not str:
             T = str(T).rstrip('0')
-        config = np.array(self._config_data[T]).reshape(2*self._L, 2*self._L)
+        config = np.array(self._config_data[T][config_idx]).reshape(
+            2*self._L, 2*self._L
+        )
         blocked_config = np.zeros((self._L, self._L), dtype=int)
         blocked_sites = [
             (2*i, 2*j) for i in range(self._L//2) for j in range(self._L//2)
@@ -326,9 +415,17 @@ class Bonds(WormSimulation):
     def block_configs(self, block_val=0):
         blocked_configs = {}
         blocked_configs[block_val] = {}
-        for key, val in self._config_data.items():
-            blocked_configs[block_val][key] = self._block_config_T(key, 
-                                                                   block_val)
+        #  for temp, val in self._config_data.items():
+        for temp in self._config_data.keys():
+            _blocked_configs = {}
+            _blocked_configs[block_val] = {}
+            for config_idx in self._config_data[temp].keys():
+                _blocked_configs[block_val][config_idx] = (
+                    self._block_config_T(temp, config_idx, block_val)
+                )
+            blocked_configs[block_val][temp] = _blocked_configs[block_val]
+            #  blocked_configs[block_val][key] = self._block_config_T(key,
+            #                                                         block_val)
         return blocked_configs
 
     def write_config_data(self, data_dir=None):
@@ -350,17 +447,19 @@ class Bonds(WormSimulation):
         if not os.path.exists(config_dir):
             os.makedirs(config_dir)
 
-        print("Saving configs to: {}".format(config_dir))
-        for key, val in self._config_data.items():
-            #  self._config_data[key] = (
-            #      np.array(val).reshape(1, -1).tolist()[0]
-            #  )
-            #  config_file = config_dir
-            fn = config_dir + '{}_config_{}.txt'.format(self._L, float(key))
-            with open(fn, "a") as f:
-                f.write('{} {}\n'.format(
-                    float(key), ' '.join([str(i) for i in val.flatten()])
-                ))
+        for temp, val in self._config_data.items():
+            tf = float(temp)
+            fn = config_dir + '{}_config_{}.txt'.format(self._L, tf)
+            print("Saving configs to: {}".format(fn))
+            for config_idx, config in self._config_data[temp].items():
+                #  self._config_data[key] = (
+                #      np.array(val).reshape(1, -1).tolist()[0]
+                #  )
+                #  config_file = config_dir
+                with open(fn, "a") as f:
+                    f.write('{} {}\n'.format(
+                        tf, ' '.join([str(i) for i in config.flatten()])
+                    ))
 
     def write_blocked_config_data(self, data_dir=None, blocked_configs=None):
         """ Save blocked configuration data to be used for later analysis.
@@ -391,14 +490,16 @@ class Bonds(WormSimulation):
         if not os.path.exists(config_dir):
             os.makedirs(config_dir)
         try:
-            print("Saving blocked configs to: {}".format(config_dir))
-            for key, val in configs[block_val].items():
+            for temp, val in configs[block_val].items():
+                tf = float(temp)
                 config_file = config_dir + '{}_config_{}.txt'.format(self._L,
-                                                                     float(key))
-                with open(config_file, "a") as f:
-                    f.write('{} {}\n'.format(
-                        float(key), ' '.join([str(i) for i in val.flatten()])
-                    ))
+                                                                     tf)
+                print("Saving blocked configs to: {}".format(config_file))
+                for i, c in self._blocked_config_data[block_val][temp].items():
+                    with open(config_file, "a") as f:
+                        f.write('{} {}\n'.format(
+                            tf, ' '.join([str(j) for j in c.flatten()])
+                        ))
         except KeyError:
             raise ("Block val of blocked configs is not the same as "
                    "{}. Exiting. ".format(block_val))
