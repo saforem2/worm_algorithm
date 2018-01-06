@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
-from scipy.stats import chisquare
 from collections import OrderedDict
 
 def jackknife_err(y_i, y_full, num_blocks):
