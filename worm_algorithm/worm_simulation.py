@@ -36,7 +36,7 @@ class WormSimulation(object):
         if self._run:
             self.make()
             self.remove_old_data()
-            self.run(verbose=verbose)
+            self.run()
 
     def prepare_input(self, T, num_steps):
         """ Create txt file to be read in as parameters for the C++ method. """
