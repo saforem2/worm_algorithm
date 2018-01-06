@@ -1,10 +1,9 @@
 import os
-import sys
 import shutil
 import numpy as np
 import pandas as pd
 
-def get_config(file):
+def get_config(_file):
     """ Load worm configuration(s) from .txt file.
 
     Args:
@@ -15,7 +14,7 @@ def get_config(file):
             configuration per line.
     """
     try:
-        return pd.read_csv(file, header=None, engine='c',
+        return pd.read_csv(_file, header=None, engine='c',
                            delim_whitespace=True, index_col=0).values
     except IOError:
         raise "Unable to read from: {}".format(file)
@@ -36,7 +35,7 @@ def bond_counter(L, blocked_val=None, data_dir=None, save_dir=None,
             by the average number of active bonds, Nb. (Averaged over the
             number of sample configurations at a fixed temperature)
     """
-    N = 4 * L * L
+    #  N = 4 * L * L
     if blocked_val is None:
         width = 2 * L
         data_dir = '../data/configs/{}_lattice/separated_data/'.format(L)
@@ -75,10 +74,10 @@ def bond_counter(L, blocked_val=None, data_dir=None, save_dir=None,
     config_files = [data_dir + i for i in _config_files]
 
     bond_counts = {}
-    for idx, file in enumerate(config_files):
-        print("Reading from: {}\n".format(file))
+    for idx, f in enumerate(config_files):
+        print("Reading from: {}\n".format(f))
         key = temp_strings[idx]
-        config = get_config(file)
+        config = get_config(f)
         bc_arr = []  # bond counts array
         bond_idxs = [
             (i, j) for i in range(width) for j in range(width) if (i+j)%2 == 1
@@ -99,12 +98,12 @@ def bond_counter(L, blocked_val=None, data_dir=None, save_dir=None,
 
         if write:
             print("Writing to: {}\n".format(save_file))
-            with open(save_file, 'a') as f:
-                f.write('{} {} {} {} {}\n'.format(key,
-                                                  mean_bond_counts,
-                                                  mean_bond2_counts,
-                                                  mean_bond_counts2,
-                                                  fluctuations))
+            with open(save_file, 'a') as _f:
+                _f.write('{} {} {} {} {}\n'.format(key,
+                                                   mean_bond_counts,
+                                                   mean_bond2_counts,
+                                                   mean_bond_counts2,
+                                                   fluctuations))
         bond_counts[key] = [mean_bond_counts,
                             mean_bond2_counts,
                             mean_bond_counts2,

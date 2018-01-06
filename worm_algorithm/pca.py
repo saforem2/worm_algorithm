@@ -117,7 +117,7 @@ class PrincipalComponent(object):
         """
         leading_eig_val_avg = []
         #leading_eig_val_err = []
-        for key, val in self._leading_eig_val.items():
+        for val in self._leading_eig_val.values():
             leading_eig_val_avg.append(np.mean(val))
             #  leading_eig_val_err.append(
             #      jackknife_stats(np.array(val), np.std)[2]

@@ -1,17 +1,7 @@
-import os
-import sys
-import pickle
 import numpy as np
-import numpy.linalg as LA
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
-from scipy.optimize import curve_fit, least_squares
-from scipy.stats import chisquare, chi2
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import matplotlib.offsetbox as offsetbox
-from bonds import Bonds
-from worm_simulation import WormSimulation
+from scipy.optimize import curve_fit
+from scipy.stats import chisquare
 from collections import OrderedDict
 
 def jackknife_err(y_i, y_full, num_blocks):

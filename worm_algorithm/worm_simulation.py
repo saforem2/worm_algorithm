@@ -1,13 +1,9 @@
-import time
 import os
-import itertools
 import subprocess
 import sys
 import argparse
 
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
 class WormSimulation(object):
     """ WormSimulation, a python wrapper used to implement the worm algorithm
@@ -61,9 +57,9 @@ class WormSimulation(object):
         """ Remove configuration data from previous runs. """
         try:
             files_ = os.listdir(self._config_dir)
-            for file in files_:
-                if file.endswith('.txt'):
-                    os.remove(self._config_dir + file)
+            for _file in files_:
+                if _file.endswith('.txt'):
+                    os.remove(self._config_dir + _file)
         except ValueError:
             raise "Directory is already empty. Exiting."
 
@@ -82,20 +78,20 @@ class WormSimulation(object):
             print('compilation -- done\n')
             self._prog = './src/worm_ising_2d'
             if not os.path.isfile(self._prog):
-                curr_dir = os.getcwd()
+                #  curr_dir = os.getcwd()
                 raise "ERROR: Unable to find executable file {}".format(
                     self._prog
                 )
         except (IOError, OSError):
             raise "Directory structure invalid. Exiting."
 
-    def run(self, verbose=True):
+    def run(self):
         """
         Main method for running the simulation, and storing variables of
         interest.
         """
-        _L = []
-        _T = []
+        #  _L = []
+        #  _T = []
         self._T = []
         self._beta = {}
         self._Z = {}
@@ -231,8 +227,8 @@ def main(argv):
         T_step = 0.1
 
     print("Initializing simulation...\n")
-    sim = WormSimulation(L, run=run, num_steps=num_steps, verbose=verbose,
-                         T_start=T_start, T_end=T_end, T_step=T_step)
+    WormSimulation(L, run=run, num_steps=num_steps, verbose=verbose,
+                   T_start=T_start, T_end=T_end, T_step=T_step)
     print('done.\n')
 
 

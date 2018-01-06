@@ -1,5 +1,3 @@
-import random
-import time
 import os
 import sys
 import argparse
@@ -109,8 +107,8 @@ class Bonds(WormSimulation):
             split_files = [i.split('/') for i in bond_files]
             temp_strings = [i[-1].split('_')[-1].rstrip('.txt').rstrip('0') for
                             i in split_files]
-            for idx, file in enumerate(bond_files):
-                bonds = pd.read_csv(file, header=None, engine='c',
+            for idx, f in enumerate(bond_files):
+                bonds = pd.read_csv(f, header=None, engine='c',
                                     delim_whitespace=True).values
                 key = temp_strings[idx]
                 num_configs = bonds.shape[0] / self._num_bonds
@@ -447,11 +445,11 @@ class Bonds(WormSimulation):
         if not os.path.exists(config_dir):
             os.makedirs(config_dir)
 
-        for temp, val in self._config_data.items():
+        for temp in self._config_data.keys():
             tf = float(temp)
             fn = config_dir + '{}_config_{}.txt'.format(self._L, tf)
             print("Saving configs to: {}".format(fn))
-            for config_idx, config in self._config_data[temp].items():
+            for config in self._config_data[temp].values():
                 #  self._config_data[key] = (
                 #      np.array(val).reshape(1, -1).tolist()[0]
                 #  )
@@ -490,12 +488,12 @@ class Bonds(WormSimulation):
         if not os.path.exists(config_dir):
             os.makedirs(config_dir)
         try:
-            for temp, val in configs[block_val].items():
+            for temp in configs[block_val].keys():
                 tf = float(temp)
                 config_file = config_dir + '{}_config_{}.txt'.format(self._L,
                                                                      tf)
                 print("Saving blocked configs to: {}".format(config_file))
-                for i, c in self._blocked_config_data[block_val][temp].items():
+                for c in self._blocked_config_data[block_val][temp].values():
                     with open(config_file, "a") as f:
                         f.write('{} {}\n'.format(
                             tf, ' '.join([str(j) for j in c.flatten()])
@@ -542,9 +540,9 @@ class Bonds(WormSimulation):
                 x_blocks_m.append(i - 0.2)
             for i in range(1, self._L, 2):
                 x_blocks_p.append(i + 0.2)
-            x_blocks_tup = zip(x_blocks_m, x_blocks_p)
+            #  x_blocks_tup = zip(x_blocks_m, x_blocks_p)
             latt_x = np.arange(0, self._L, 1)
-            latt_xb = np.arange(0.5, self._L, 2)
+            #  latt_xb = np.arange(0.5, self._L, 2)
             for i in range(self._L):
                 for j in range(self._L):
                     plt.plot(latt_x[i], latt_x[j], color='k',
@@ -683,8 +681,8 @@ def main(argv):
         T_step = 0.1
 
     print("Initializing bonds..."),
-    bonds = Bonds(L, run=run, num_steps=num_steps, verbose=verbose,
-                  T_start=T_start, T_end=T_end, T_step=T_step, write=write)
+    Bonds(L, run=run, num_steps=num_steps, verbose=verbose,
+          T_start=T_start, T_end=T_end, T_step=T_step, write=write)
     print('done.\n')
 
 
