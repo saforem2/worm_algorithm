@@ -47,12 +47,19 @@ int main()
     int tail = 0, head = 0, new_head;
     int nb, ibond, delta_nb, Nb = 0, Nb_tot = 0;
     unsigned long int step_num = 0, Z = 0;
-    unsigned long int therm_steps = num_steps / 50;
+    unsigned long int therm_steps = num_steps / 10;
     unsigned long int write_steps = 1000;
     double E_av = 0.0;
     double Z_av = 0.0;
     double Nb_av = 0.0;
     int bond_num, x1, x2, y1, y2;
+    
+    // if (T < 2.2) {
+    //   therm_steps = num_steps / ;
+    // }
+    // if (T >= 2.3) {
+    //   therm_steps = num_steps / 10;
+    // }
 
     std::setprecision(2);
     std::string T_str = std::to_string(T);

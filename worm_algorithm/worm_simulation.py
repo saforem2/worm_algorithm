@@ -20,8 +20,9 @@ class WormSimulation(object):
         self._L = L
         self._verbose = verbose
         self._sim_dir = os.getcwd()
-        self._num_steps = num_steps
         self._T_range = np.arange(T_start, T_end, T_step)
+        self._num_steps = np.linspace(num_steps, num_steps/10,
+                                      len(self._T_range))
         self._run = run
         #  self._display
         self._observables_dir = '../data/observables/lattice_{}/'.format(L)
@@ -41,7 +42,7 @@ class WormSimulation(object):
             self.remove_old_data()
             self.run(verbose=verbose)
 
-    def prepare_input(self, T):
+    def prepare_input(self, T, num_steps):
         """ Create txt file to be read in as parameters for the C++ method. """
         seed = T + np.random.randint(1E4) * np.random.rand()
         setup_dir = '../data/setup/'
@@ -51,7 +52,7 @@ class WormSimulation(object):
             self._input_file = '../data/setup/input.txt'
             with open(self._input_file, 'w') as f:
                 f.write("%i %.12f %i %.32f\n" % (
-                    self._L, T, self._num_steps, seed
+                    self._L, T, num_steps, seed
                 ))
         except IOError:
             raise "Unable to locate input file in {}".format(setup_dir)
@@ -105,9 +106,10 @@ class WormSimulation(object):
         print('runs -- start\n')
         run_number = 0
         for T_idx, T in enumerate(self._T_range):
+            num_steps = self._num_steps[T_idx]
             if self._verbose:
-                print("Running T = {}".format(str(T)))
-            self.prepare_input(T)
+                print("Running T = {}, num_steps: {}".format(str(T), num_steps))
+            self.prepare_input(T, num_steps)
             process = subprocess.Popen([self._prog])
             process.wait()
             try:

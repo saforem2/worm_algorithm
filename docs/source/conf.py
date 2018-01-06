@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# worm_algorithm documentation build configuration file, created by
-# sphinx-quickstart on Sun Dec 31 04:26:47 2017.
+# Worm Algorithm documentation build configuration file, created by
+# sphinx-quickstart on Fri Jan  5 17:36:05 2018.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -16,9 +16,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+#  import sphinx_rtd_theme
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../../worm_algorithm'))
 
 
 # -- General configuration ------------------------------------------------
@@ -33,19 +34,18 @@ sys.path.insert(0, os.path.abspath('../../'))
 extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.autosummary',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
+    'sphinx.ext.napoleon',
     'sphinx.ext.mathjax',
+    'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'numpydoc',
     'sphinx.ext.githubpages']
+
+napoleon_include_private_with_doc = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
-
-# sort members by type
-autodoc_member_order = 'groupwise'
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -57,8 +57,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'worm_algorithm'
-copyright = u'2017, Sam Foreman'
+project = u'Worm Algorithm'
+copyright = u'2018, Sam Foreman'
 author = u'Sam Foreman'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -94,13 +94,30 @@ todo_include_todos = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+#  html_theme = 'alabaster'
+html_theme = "sphinx_rtd_theme"
+#  html_theme_path = [sphinx]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 # html_theme_options = {}
+html_theme_options = {
+    'typekit_id': '',
+    'canonical_url': '',
+    'analytics_id': '',
+    'logo_only': False,
+    'display_version': True,
+    #  'prev_next_buttons_location': bottom,
+    #  'style_external_links': False,
+    # Toc options
+    'collapse_navigation': False,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+    #  'includehidden': True,
+    #  'titles_only': False
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -126,7 +143,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'worm_algorithmdoc'
+htmlhelp_basename = 'WormAlgorithmdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -153,7 +170,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'worm_algorithm.tex', u'worm\\_algorithm Documentation',
+    (master_doc, 'WormAlgorithm.tex', u'Worm Algorithm Documentation',
      u'Sam Foreman', 'manual'),
 ]
 
@@ -163,7 +180,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'worm_algorithm', u'worm_algorithm Documentation',
+    (master_doc, 'wormalgorithm', u'Worm Algorithm Documentation',
      [author], 1)
 ]
 
@@ -174,8 +191,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'worm_algorithm', u'worm_algorithm Documentation',
-     author, 'worm_algorithm', 'One line description of project.',
+    (master_doc, 'WormAlgorithm', u'Worm Algorithm Documentation',
+     author, 'WormAlgorithm', 'One line description of project.',
      'Miscellaneous'),
 ]
 
