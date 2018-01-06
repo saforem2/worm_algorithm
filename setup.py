@@ -59,3 +59,4 @@ setup(
 )
 
 
+python-targets: 3

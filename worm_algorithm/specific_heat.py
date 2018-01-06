@@ -69,7 +69,7 @@ class SpecificHeat(object):
                 except KeyError:
                     energy_dict[temp] = [observables[idx, 1]]
             return OrderedDict(sorted(energy_dict.items(), key=lambda t: t[0]))
-        except FileNotFoundError:
+        except IOError:
             raise "Unable to find {}".format(self._observables_file)
 
     def _calc_avg_energies(self):
