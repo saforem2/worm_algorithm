@@ -17,7 +17,7 @@ def get_config(file):
     try:
         return pd.read_csv(file, header=None, engine='c',
                            delim_whitespace=True, index_col=0).values
-    except FileNotFoundError:
+    except IOError:
         raise "Unable to read from: {}".format(file)
 
 def bond_counter(L, blocked_val=None, data_dir=None, save_dir=None,

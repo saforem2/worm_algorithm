@@ -1,10 +1,6 @@
 import os
-import sys
 import numpy as np
-import numpy.linalg as LA
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA, TruncatedSVD
-import matplotlib.pyplot as plt
+from sklearn.decomposition import TruncatedSVD
 from collections import OrderedDict
 import pandas as pd
 
@@ -38,16 +34,15 @@ class PrincipalComponent(object):
         self._leading_eig_val_avg = self.average_data()
         self._leading_eig_val_err = list(self._err.values())
 
-    def _get_data(self, file=None):
+    def _get_data(self, _file=None):
         """ Read in configuration data from file. """
         #  file_path = self._config_dir + file
         try:
-            data = pd.read_csv(file, header=None, engine='c',
-                                  delim_whitespace=True).values
-            temp = data[0,0]
+            data = pd.read_csv(_file, header=None, engine='c',
+                               delim_whitespace=True).values
             configs = data[:, 1:]
-        except FileNotFoundError:
-            raise "Unable to read from: {}".format(file)
+        except IOError:
+            raise "Unable to read from: {}".format(_file)
         return configs
 
     def reset_data(self):
@@ -89,14 +84,14 @@ class PrincipalComponent(object):
         #  import pdb
         #  pdb.set_trace()
         num_blocks = 10
-        for idx, file in enumerate(files):
-            print("Reading data from: {}".format(file))
-            x = self._get_data(file)
+        for _file in files:
+            print("Reading data from: {}".format(_file))
+            x = self._get_data(_file)
             num_samples, num_features = x.shape
             if num_samples < num_features:
                 continue
             else:
-                key = file.split('_')[-1].rstrip('.txt').rstrip('0')
+                key = _file.split('_')[-1].rstrip('.txt').rstrip('0')
                 #  assert t == float(key)
                 self._temps.append(float(key))
                 eig_pairs = self.calc_PCA(x, num_components)
