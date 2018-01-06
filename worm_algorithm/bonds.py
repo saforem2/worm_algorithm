@@ -15,10 +15,10 @@ class Bonds(WormSimulation):
     Lattice class used for mapping and storing equilibrium configurations as
     vectors which can be interpreted as two-dimensional greyscale images.
     """
-    def __init__(self, L, run=False, num_steps=1E7, verbose=True,
-                 T_start=1., T_end=3.5, T_step=0.1, 
-                 block_val=0, write=True, write_blocked=True):
-        WormSimulation.__init__(self, L, run, num_steps, verbose,
+    def __init__(self, L, run=False, num_steps=1E7, decay_steps=False,
+                 verbose=True, T_start=1., T_end=3.5, T_step=0.1, block_val=0,
+                 write=True, write_blocked=True):
+        WormSimulation.__init__(self, L, run, num_steps, decay_steps, verbose,
                                 T_start, T_end, T_step)
         self._L = L
         self._num_bonds = 2*self._L*self._L

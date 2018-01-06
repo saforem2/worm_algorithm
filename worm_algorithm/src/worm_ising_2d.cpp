@@ -48,7 +48,7 @@ int main()
     int nb, ibond, delta_nb, Nb = 0, Nb_tot = 0;
     unsigned long int step_num = 0, Z = 0;
     unsigned long int therm_steps = num_steps / 10;
-    unsigned long int write_steps = 1000;
+    unsigned long int write_steps = 500;
     double E_av = 0.0;
     double Z_av = 0.0;
     double Nb_av = 0.0;
