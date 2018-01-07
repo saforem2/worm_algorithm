@@ -97,7 +97,6 @@ def bond_counter(L, blocked_val=None, data_dir=None, save_dir=None,
         fluctuations = mean_bond2_counts - mean_bond_counts2
 
         if write:
-            print("Writing to: {}\n".format(save_file))
             with open(save_file, 'a') as _f:
                 _f.write('{} {} {} {} {}\n'.format(key,
                                                    mean_bond_counts,
@@ -108,4 +107,5 @@ def bond_counter(L, blocked_val=None, data_dir=None, save_dir=None,
                             mean_bond2_counts,
                             mean_bond_counts2,
                             fluctuations]
+    print("Nb data written to: {}\n".format(save_file))
     return bond_counts
