@@ -41,7 +41,7 @@ class Configs(object):
         _temp_strings = [i.split('_')[-1].rstrip('.txt') for i in _config_files]
         self._temp_strings = [i.rstrip('0') for i in _temp_strings]
         self._config_files = [self._config_dir + f for f in _config_files]
-        self.bond_stats, self.leading_eig_vals = self.analysis()
+        #  self.bond_stats, self.leading_eig_vals = self.analysis()
         #  self.bond_counts = self._count_bonds()
         #  self.analysis(write_bond_counts=True, write_pca=True)
 
@@ -227,22 +227,22 @@ class Configs(object):
     def analysis(self, write_bond_counts=True, write_pca=True):
         """  Calculate bond statistics and perform principal component analysis
         on all configuration data. """
-        bond_stats = {}
-        leading_eig_vals = {}
+        self.bond_stats = {}
+        self.leading_eig_vals = {}
         for idx, config_file in enumerate(self._config_files):
             print("Reading in from: {}\n".format(config_file))
             key = self._temp_strings[idx]
             data = self._load_from_file(config_file)
-            bond_stats[key] = self.count_bonds(data, num_blocks=10)
-            leading_eig_vals[key] = (
+            self.bond_stats[key] = self.count_bonds(data, num_blocks=10)
+            self.leading_eig_vals[key] = (
                 self.calc_leading_eigenvalue(data, num_components=1,
                                              num_blocks=10)
             )
-        if write_bond_counts:
-            self._write_bond_counts()
+        #  if write_bond_counts:
+        #      self._write_bond_counts()
 
-        if write_pca:
-            self._write_pca()
-        return bond_stats, leading_eig_vals
+        #  if write_pca:
+        #      self._write_pca()
+        #  return bond_stats, leading_eig_vals
 
 

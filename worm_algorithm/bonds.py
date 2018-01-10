@@ -23,11 +23,7 @@ class Bonds(WormSimulation):
         self._L = L
         self._num_bonds = 2*self._L*self._L
         self._bonds_dir = '../data/bonds/lattice_{}/'.format(self._L)
-        #  if not os.path.exists(self._bonds_dir):
-        #      os.makedirs(self._bonds_dir)
         self._bond_map_dir = '../data/bond_map/lattice_{}/'.format(self._L)
-        #  if not os.path.exists(self._bond_map_dir):
-        #      os.makedirs(self._bond_map_dir)
         self.__map_file = self._bond_map_dir + 'bond_map_{}.txt'.format(L)
         self._map = self._get_map()
         self._dict = self._get_bonds()
