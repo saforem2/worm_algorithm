@@ -34,7 +34,18 @@ def jackknife_var(x, func, num_blocks=100):
     )
 
 def jackknife_err(y_i, y_full, num_blocks):
-    return np.sqrt((num_blocks - 1) * np.sum((y_i - y_full)**2) / num_blocks)
+    if type(y_i) == list:
+        y_i = np.array(y_i)
+    if type(y_full) == list:
+        y_full = np.array(y_full)
+    try:
+        err = np.sqrt((num_blocks - 1) * np.sum((y_i - y_full)**2) /
+                      num_blocks)
+    except ValueError:
+        print("y_i.shape: {}, y_full.shape: {}".format(y_i.shape,
+                                                       y_full.shape))
+        raise
+    return err
 
 
 def jackknife_resampling(data):
