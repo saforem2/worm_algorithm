@@ -12,27 +12,26 @@ class CountBonds(object):
     """ Class to obtain statistics about the average number of bonds <Nb> and
     the variance in the average number of bonds, <Nb^2> - <Nb>^2
 
-    Attributes
-    ----------
-    _L : int
-        Linear dimension of lattice.
-    _block_val : int
-        Either 0, 1, or 2, specifying the type of blocking scheme used to
-        generate the data.
-    _num_blocks : int
-        Number of blocks to be used for block bootstrap error analysis.
-    _data_dir : str
-        Directory containing configuration data to be analyzed.
-    _save_dir : str
-        Directory where resulting bond_statistics data is to be written to.
-    _write : bool
-        Whether or not to save the bond_statistics data.
-    _verbose : bool
-        Whether or not to display information as the analysis is being
-        performed.
+    Args:
+        _L (int):
+            Linear dimension of lattice.
+        _block_val (int):
+            Either 0, 1, or 2, specifying the type of blocking scheme used to
+            generate the data.
+        _num_blocks (int):
+            Number of blocks to be used for block bootstrap error analysis.
+        _data_dir : str
+            Directory containing configuration data to be analyzed.
+        _save_dir : (str)
+            Directory where resulting bond_statistics data is to be written to.
+        _write : bool
+            Whether or not to save the bond_statistics data.
+        _verbose : bool
+            Whether or not to display information as the analysis is being
+            performed.
     """
     def __init__(self, L, block_val=None, num_blocks=10, data_dir=None,
-                 save_dir=None, write=False, verbose=False):
+                 save_dir=None, save=True, verbose=False):
         self._L = L
         self._block_val = block_val
         self._num_blocks = num_blocks
@@ -58,26 +57,28 @@ class CountBonds(object):
                     )
                 )
         config_files = os.listdir(self._data_dir)
-        self._config_files = [
+        self._config_files = sorted([
             self._data_dir + i for i in config_files if i.endswith('.txt')
+        ])
+        temp_strings = [
+            i.split('_')[-1].rstrip('.txt') for i in self._config_files
         ]
-        temp_strings = [i.split('_')[-1].rstrip('.txt') for i in config_files]
         self._temp_strings = [i.rstrip('0') for i in temp_strings]
         self.count_bonds()
+        if save:
+            self._save()
 
     def _get_configs(self, _file):
         """ Load worm configuration(s) from .txt file.
 
-        Parameters
-        ----------
-        file : str
-            Path to file containing configuration data.
+        Args:
+            file (str):
+                Path to file containing configuration data.
 
-        Returns
-        -------
-        config : np.array
-            Array containing worm configurations with one configuration per
-            line.
+        Returns:
+            config (np.array):
+                Array containing worm configurations with one configuration per
+                line.
         """
         try:
             return pd.read_csv(_file, header=None, engine='c',
@@ -90,7 +91,7 @@ class CountBonds(object):
         bc_arr = []
         w = self._width
         bond_idxs = [
-            (i,j) for i in range(w) for j in range(w) if (i + j) % 2 == 1
+            (i, j) for i in range(w) for j in range(w) if (i + j) % 2 == 1
         ]
 
         for config in data:
@@ -112,18 +113,16 @@ class CountBonds(object):
         configuration at temperature T using configuration data obtained from
         the get_config method above. 
 
-        Parameters
-        ----------
-        configs : array-like
-            Array containing configuration data returned from
-            self._load_from_file method.
+        Args:
+            configs (array-like):
+                Array containing configuration data returned from
+                self._load_from_file method.
 
-        Returns
-        ------
-        bond_counts : dict
-            Dictionary with temperature keys and values given by the average
-            number of active bonds, Nb. (Averaged over the number of sample
-            configurations at a fixed temperature)
+        Returns:
+            bond_counts (dict):
+                Dictionary with temperature keys and values given by the
+                average number of active bonds, Nb. (Averaged over the number
+                of sample configurations at a fixed temperature)
         """
         bond_counts = self._count_bonds(data)
 
@@ -148,13 +147,17 @@ class CountBonds(object):
         for idx, config_file in enumerate(self._config_files):
             if self._verbose:
                 print("Reading in from: {}\n".format(config_file))
-            key = self._temp_strings[idx]
+            #  key = self._temp_strings[idx]
+            key = config_file.split('_')[-1].rstrip('.txt')
+            #  key = [i.split('_')[-1].rstrip('.txt') for i in ]
+            #  i.split('_')[-1].rstrip('.txt') for i in self._config_files
             data = self._get_configs(config_file)
             val, err = self._count_bonds_with_err(data, self._num_blocks)
             self.bond_stats[key] = [val[0], err[0], val[1], err[1]]
 
 
-    def _write_bond_stats(self):
+    def _save(self):
+        """Save bond_stats data to .txt file."""
         if not os.path.exists(self._save_dir):
             os.makedirs(self._save_dir)
         save_file = self._save_dir + 'bond_stats_{}.txt'.format(self._L)
