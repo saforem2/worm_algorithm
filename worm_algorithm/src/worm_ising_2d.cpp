@@ -40,7 +40,7 @@ int main()
     fclose(in_file);
 
     init_genrand(seed);
-    double T_crit = 2/log(1+sqrt(2));
+    // double T_crit = 2/log(1+sqrt(2));
     double K = 1.0 / T, P_acc;
 
     double inv_K = 1.0 / K;
@@ -48,18 +48,18 @@ int main()
     int tail = 0, head = 0, new_head;
     int nb, ibond, delta_nb, Nb = 0, Nb_tot = 0;
     unsigned long int step_num = 0, Z = 0;
-    unsigned long int therm_steps = num_steps / 10;
-    unsigned long int write_steps = 500;
+    unsigned long int therm_steps = 0.1 * num_steps;
+    unsigned long int write_steps = 100;
     double E_av = 0.0;
     double Z_av = 0.0;
     double Nb_av = 0.0;
     int bond_num, x1, x2, y1, y2;
     
     // not-so-aggressive logging for T > T_crit
-    if (T > 2.5) {
-      therm_steps *= 5;
-      write_steps *= 10;
-    }
+    // if (T > 2.5) {
+    //   therm_steps *= 5;
+    //   write_steps *= 10;
+    // }
     
     // if (T < 2.2) {
     //   therm_steps = num_steps / ;
