@@ -15,30 +15,30 @@ class PrincipalComponent(object):
     """ Class used to perform principal component analysis on worm
     configuration data.
     
-    Attributes
-    ----------
-    _L : int
-        Linear dimension of lattice.
-    _block_val : int
-        Either 0, 1, or 2, specifying the type of blocking scheme used to
-        generate the data.
-    _num_blocks : int
-        Number of blocks to be used for block bootstrap error analysis.
-    _data_dir : str
-        Directory containing configuration data to be analyzed.
-    _save_dir : str
-        Directory where resulting pca data is to be written to.
-    _write : bool
-        Whether or not to save the pca data.
-    _verbose : bool
-        Whether or not to display information as the analysis is being
-        performed.
+    Attributes:
+        _L (int):
+            Linear dimension of lattice.
+        _block_val (int):
+            Either 0, 1, or 2, specifying the type of blocking scheme used to
+            generate the data.
+        _num_blocks (int):
+            Number of blocks to be used for block bootstrap error analysis.
+        _data_dir (str):
+            Directory containing configuration data to be analyzed.
+        _save_dir (str):
+            Directory where resulting pca data is to be written to.
+        _write (bool):
+            Whether or not to save the pca data.
+        _verbose (bool):
+            Whether or not to display information as the analysis is being
+            performed.
     """
     def __init__(self, L, block_val=None, num_blocks=10, data_dir=None,
-                 save_dir=None, write=False, verbose=False):
+                 save_dir=None, save=True, verbose=False):
         self._L = L
         self._block_val = block_val
         self._num_blocks = num_blocks
+        self._verbose = verbose
         #  self._LL = int(2*self._L)
         #  self._num_pixels = int(self._LL * self._LL)
         self._temps = []
@@ -69,22 +69,20 @@ class PrincipalComponent(object):
         else:
             self._save_dir = save_dir
         config_files = os.listdir(self._data_dir)
-        self._config_files = [
+        self._config_files = sorted([
             self._data_dir + i for i in config_files if i.endswith('.txt')
-        ]
+        ])
         temp_strings = [i.split('_')[-1].rstrip('.txt') for i in config_files]
         self._temp_strings = [i.rstrip('0') for i in temp_strings]
 
-
         self._PCA()
-        self._leading_eig_val_avg = self.average_data()
-        self._leading_eig_val_err = list(self._err.values())
-        if write:
+        #  self._leading_eig_val_avg = self.average_data()
+        #  self._leading_eig_val_err = list(self._err.values())
+        if save:
             self._save()
 
     def _get_data(self, _file=None):
         """ Read in configuration data from file. """
-        #  file_path = self._data_dir + file
         try:
             data = pd.read_csv(_file, header=None, engine='c',
                                delim_whitespace=True).values
@@ -125,16 +123,9 @@ class PrincipalComponent(object):
         """ Perform PCA analysis file by file for file in self._data_dir to
         prevent memory overflow. 
         """
-        #  _files = os.listdir(self._data_dir)
-        #  files = sorted([
-        #      self._data_dir + i for i in _files if i.endswith('.txt')
-        #  ])
-        #  import pdb
-        #  pdb.set_trace()
-        #  num_blocks = 10
-        #  for _file in files:
         for _file in self._config_files:
-            print("Reading data from: {}".format(_file))
+            if self._verbose:
+                print("Reading data from: {}".format(_file))
             data = self._get_data(_file)
             num_samples, num_features = data.shape
             if num_samples < num_features:
@@ -154,25 +145,26 @@ class PrincipalComponent(object):
                 self._err[key] = jackknife_err(y_i=eig_pairs_rs,
                                                y_full=eig_pairs[0][0],
                                                num_blocks=self._num_blocks)
-        self._eig_vals = OrderedDict(
-            self._eig_vals.items(), key=lambda t: t[0]
-        )
-        self._leading_eig_val = OrderedDict(
-            self._leading_eig_val.items(), key=lambda t: t[0]
-        )
+        #  self._eig_vals = OrderedDict(
+        #      self._eig_vals.items(), key=lambda t: t[0]
+        #  )
+        #  self._leading_eig_val = OrderedDict(
+        #      self._leading_eig_val.items(), key=lambda t: t[0]
+        #  )
 
-    def average_data(self):
-        """ Average leading eigenvalue data and use jackknife resampling for
-        error bars.
-        """
-        leading_eig_val_avg = []
-        #leading_eig_val_err = []
-        for val in self._leading_eig_val.values():
-            leading_eig_val_avg.append(np.mean(val))
-            #  leading_eig_val_err.append(
-            #      jackknife_stats(np.array(val), np.std)[2]
-            #  t
-        return leading_eig_val_avg#, leading_eig_val_err
+    #  def average_data(self):
+    #      """ Average leading eigenvalue data and use jackknife resampling for
+    #      error bars.
+    #      """
+    #      leading_eig_val_avg = []
+    #      #leading_eig_val_err = []
+    #      for val in self._leading_eig_val.values():
+    #          if
+    #          leading_eig_val_avg.append(np.mean(val))
+    #          #  leading_eig_val_err.append(
+    #          #      jackknife_stats(np.array(val), np.std)[2]
+    #          #  t
+    #      return leading_eig_val_avg#, leading_eig_val_err
 
     def _save(self):
         if not os.path.exists(self._save_dir):
