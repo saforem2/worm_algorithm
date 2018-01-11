@@ -4,26 +4,23 @@ from scipy.optimize import curve_fit
 from collections import OrderedDict
 from utils import *
 
-def jackknife_err(y_i, y_full, num_blocks):
-    return np.sqrt(
-        (num_blocks - 1) * np.sum((y_i - y_full)**2, axis=0) / num_blocks
-    )
-
-Tc = 2. / np.log(1 + np.sqrt(2))
-
 class SpecificHeat(object):
     """ SpecificHeat class to calculate average energy and specific heat (with
     errors) using observables data generated from WormSimulation.
     """
-    def __init__(self, L):
+    def __init__(self, L, num_blocks=5, data_file=None):
         self._L = L
+        self._num_blocks = num_blocks
         self._specific_heat_dict = {}
         self._specific_heat_arr = []
-        self._observables_file = (
-            '../data/observables/lattice_{}/observables_{}.txt'.format(
-                self._L, self._L
+        if data_file is None:
+            self._data_file = (
+                '../data/observables/lattice_{}/observables_{}.txt'.format(
+                    self._L, self._L
+                )
             )
-        )
+        else:
+            self._data_file = data_file
         self._energy_dict = self._load_energies()
         self._energy_temps, self._avg_energy, self._energy_error = (
             self._calc_avg_energies()
@@ -50,7 +47,7 @@ class SpecificHeat(object):
             runs.
         """
         try:
-            observables = pd.read_csv(self._observables_file,
+            observables = pd.read_csv(self._data_file,
                                       delim_whitespace=True,
                                       header=None).values
             temps = [str(i).rstrip('0') for i in observables[:, 0]]
@@ -65,7 +62,7 @@ class SpecificHeat(object):
                     energy_dict[temp] = [observables[idx, 1]]
             return OrderedDict(sorted(energy_dict.items(), key=lambda t: t[0]))
         except IOError:
-            print("Unable to find {}".format(self._observables_file))
+            print("Unable to find {}".format(self._data_file))
             raise
 
     def _calc_avg_energies(self):
@@ -81,21 +78,31 @@ class SpecificHeat(object):
             avg_energies (list): Values of the average energies.
             errors (list): Standard deviation of energy measurements.
         """
-        self._err_dict = {}
+        self._err = {}
         if self._energy_dict is None:
             raise "No values to average. Exiting."
         else:
             temps = []
-            avg_energy = []
+            avg_energy_arr = []
             errors = []
             for key, val in self._energy_dict.items():
                 temps.append(float(key))
-                avg_energy.append(np.mean(val))
-                errors.append(np.std(val))
-                self._err_dict[key] = np.std(val)
+                avg_energy = np.mean(val)
+                avg_energy_arr.append(avg_energy)
+                data_rs = block_resampling(np.array(val), self._num_blocks)
+                avg_energy_rs = []
+                for block in data_rs:
+                    avg_energy_rs.append(np.mean(block))
+                error = jackknife_err(y_i = avg_energy_rs,
+                                      y_full = avg_energy,
+                                      num_blocks=self._num_blocks)
+                errors.append(error)
+                self._err[key] = error
 
-        return temps, avg_energy, errors
+                #  errors.append(np.std(val))
+                #  self._err_dict[key] = np.std(val)
 
+        return temps, avg_energy_arr, errors
 
     def _calc_specific_heat(self, E_avg=None):
         """ Calculate the average specific heat (Cv = dE/dT) using a finite
@@ -146,7 +153,7 @@ class SpecificHeat(object):
             float(i[0]) for i in list(specific_heat.values())
         ]
         specific_heat_errors = [
-            self._err_dict[key] for key in list(specific_heat.keys())
+            self._err[key] for key in list(specific_heat.keys())
         ]
         return specific_heat_temps, specific_heat_vals, specific_heat_errors
 
