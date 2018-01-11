@@ -3,6 +3,7 @@ import sys
 import argparse
 import getopt
 from operator import xor
+from collections import OrderedDict
 
 import pandas as pd
 import numpy as np
@@ -326,7 +327,7 @@ class Bonds(WormSimulation):
                                                                  config_idx)
             config_data[temp] = _config_data
             #config_data[key] = self._set_config_data(key)
-        return config_data
+        return OrderedDict(sorted(config_data.items(), key=lambda t: t[0]))
     
     def _block_config_T(self, T, config_idx, block_val):
         """ Block individual configuration (at temp T).
