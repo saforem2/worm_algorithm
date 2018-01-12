@@ -648,7 +648,7 @@ class Bonds(WormSimulation):
         return fig
 
 
-def main(*args, **kwargs):
+def main(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("-L", "--size", type=int,
                         help="Define the linear size of the lattice (DEFAULT:"
