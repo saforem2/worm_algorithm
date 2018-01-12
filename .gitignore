@@ -1,5 +1,8 @@
 data/*
 data_old/*
+data_copy/*
+data_01_11_0549/*
+
 worm_algorithm/src/worm_ising_2d
 
 *.pyc
