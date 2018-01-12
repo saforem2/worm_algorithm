@@ -224,10 +224,8 @@ def main(argv):
     power = args.power
     if power is None:
         num_steps = 1E7
-    
     run = args.run_sim
     verbose = args.verbose
-    
     T_start = args.Tstart
     if T_start is None:
         T_start = 1.0
@@ -248,7 +246,3 @@ def main(argv):
 
 if __name__ == '__main__':
     main(sys.argv)
-
-
-
-
