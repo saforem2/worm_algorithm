@@ -8,7 +8,7 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from worm_simulation import WormSimulation
+from worm_algorithm.worm_simulation import WormSimulation
 
 
 class Bonds(WormSimulation):
@@ -215,8 +215,6 @@ class Bonds(WormSimulation):
                 )
             x_bonds[temp] = configs_x_bonds
             y_bonds[temp] = configs_y_bonds
-
-            
         
         #  active_bonds = {}
         #  for key, val in self._mapped_bonds.items():
@@ -269,7 +267,8 @@ class Bonds(WormSimulation):
         Args:
             T (float): temperature
         """
-        if type(T) is not str:
+        #  if type(T) is not str:
+        if not isinstance(T, str):
             T = str(T)
         #  import pdb
         #  pdb.set_trace()
@@ -390,7 +389,8 @@ class Bonds(WormSimulation):
                 after having performed a single renormalization group
                 `blocking` iteration.
         """
-        if type(T) is not str:
+        #  if type(T) is not str:
+        if not isinstance(T, str):
             T = str(T).rstrip('0')
         config = np.array(self._config_data[T][config_idx]).reshape(
             2*self._L, 2*self._L
@@ -540,7 +540,7 @@ class Bonds(WormSimulation):
             plt.clf()
             plt.close('all')
 
-        if mode == None:
+        if mode is None:
             plt.clf()
             fig = plt.figure(figsize=(8,8))
             ax = fig.add_subplot(1,1,1)
@@ -648,7 +648,7 @@ class Bonds(WormSimulation):
         return fig
 
 
-def main():
+def main(*args, **kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("-L", "--size", type=int,
                         help="Define the linear size of the lattice (DEFAULT:"
