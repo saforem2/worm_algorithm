@@ -8,7 +8,7 @@ from collections import OrderedDict
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from worm_algorithm.worm_simulation import WormSimulation
+from worm_simulation import WormSimulation
 
 
 class Bonds(WormSimulation):
