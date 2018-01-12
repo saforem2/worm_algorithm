@@ -26,9 +26,16 @@ class SpecificHeat(object):
             self._calc_avg_energies()
         )
         #  tup = self._calc_specific_heat()
-        self._spec_heat_temps, self._spec_heat, self._spec_heat_err = (
-            self._calc_specific_heat()
-        )
+        #  self._specific_heat, self._spec_heat_temps, self._spec_heat,
+        #  self._spec_heat_err = (
+        #      self._calc_specific_heat()
+        #  )
+        tup = self._calc_specific_heat()
+        self._specific_heat_dict = tup[0]
+        self._spec_heat_temps = tup[1]
+        self._spec_heat = tup[2]
+        self._spec_heat_err = tup[3]
+
         #  self._specific_heat_temps, self._specific_heat, self._specific_heat_err
         #  self._specific_heat_temps, self._specific_heat, self._specific_heat_err = (
         #      self._calc_specific_heat()
@@ -155,7 +162,10 @@ class SpecificHeat(object):
         specific_heat_errors = [
             self._err[key] for key in list(specific_heat.keys())
         ]
-        return specific_heat_temps, specific_heat_vals, specific_heat_errors
+        return (specific_heat,
+                specific_heat_temps,
+                specific_heat_vals,
+                specific_heat_errors)
 
     def calc_specific_heat(self, num_blocks=20):
         """ Calculate specific heat with errors from energy_dict. """
