@@ -186,7 +186,6 @@ int main()
     num_bonds_out.open(num_bonds_file, std::ofstream::app);
     num_bonds_out << L << " " << T << " " << Nb << "\n";
     num_bonds_out.close();
-
 } //end main
 
 /**
