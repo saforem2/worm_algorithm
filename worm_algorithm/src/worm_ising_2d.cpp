@@ -54,6 +54,9 @@ int main()
     double Z_av = 0.0;
     double Nb_av = 0.0;
     int bond_num, x1, x2, y1, y2;
+    // double gamma = 1.75;
+    // double zc = 2.17;
+
     
     // not-so-aggressive logging for T > T_crit
     // if (T > 2.5) {
