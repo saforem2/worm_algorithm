@@ -15,10 +15,33 @@ class Bonds(WormSimulation):
     """
     Lattice class used for mapping and storing equilibrium configurations as
     vectors which can be interpreted as two-dimensional greyscale images.
+
+    Attributes:
+        L (int):
+            Linear size of lattice.
+        run (bool):
+            Flag to run the simulation (if True)
+        num_steps (int):
+            Number of MC steps to carry out in simulation.
+        decay_steps (bool):
+            Flag for decaying num_steps with temperature, since the simulation
+            becomes much less efficient at higher T. (NOTE: This flag should
+            probably not be enabled, it seems to give bad data.)
+        verbose (bool):
+            Flag for printing information about the simulation as its being
+            run. 
+        T_start (float):
+            Starting temperature for simulation.
+
+
+
+
     """
     def __init__(self, L, run=False, num_steps=1E7, decay_steps=False,
-                 verbose=True, T_start=1., T_end=3.5, T_step=0.1, block_val=0,
-                 write=True, write_blocked=True):
+                 verbose=True, T_start=1., T_end=3.5, T_step=0.1, T_arr=None,
+                 block_val=0, write=True, write_blocked=True):
+        """Initialize Bonds class, which can also be used to run the
+        simulation."""
         WormSimulation.__init__(self, L, run, num_steps, decay_steps, verbose,
                                 T_start, T_end, T_step)
         self._L = L
