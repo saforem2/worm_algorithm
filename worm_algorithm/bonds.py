@@ -32,18 +32,18 @@ class Bonds(WormSimulation):
             run. 
         T_start (float):
             Starting temperature for simulation.
-
-
-
-
     """
     def __init__(self, L, run=False, num_steps=1E7, decay_steps=False,
                  verbose=True, T_start=1., T_end=3.5, T_step=0.1, T_arr=None,
                  block_val=0, write=True, write_blocked=True):
         """Initialize Bonds class, which can also be used to run the
         simulation."""
-        WormSimulation.__init__(self, L, run, num_steps, decay_steps, verbose,
-                                T_start, T_end, T_step)
+        if T_arr is None:
+            WormSimulation.__init__(self, L, run, num_steps, decay_steps,
+                                    verbose, T_start, T_end, T_step)
+        else:
+            WormSimulation.__init__(self, L, run, num_steps, decay_steps,
+                                    verbose, T_arr=T_arr)
         self._L = L
         self._num_bonds = 2*self._L*self._L
         self._bonds_dir = '../data/bonds/lattice_{}/'.format(self._L)
@@ -215,50 +215,6 @@ class Bonds(WormSimulation):
                 )
             x_bonds[temp] = configs_x_bonds
             y_bonds[temp] = configs_y_bonds
-
-            
-        
-        #  active_bonds = {}
-        #  for key, val in self._mapped_bonds.items():
-        #      active_bonds[key] = []
-        #      for i in val:
-        #          #  if i[1] % 2 == 1:
-        #              config_idxs = np.where(i[1] % 2 == 1)
-        #              active_bonds[key].append([i[0], config_idxs])
-        #              #  except KeyError:
-        #              #      active_bonds[key] = [i[0]]
-        #          #  else:
-        #          #      active_bonds[key] = []
-        #
-        #  x_bonds = {}
-        #  y_bonds = {}
-        #  for key, val in active_bonds.items():
-        #      x_sites = []
-        #      y_sites = []
-        #      x_configs_sites_idxs = []
-        #      y_configs_sites_idxs = []
-        #      configs = [i[1] for i in val]
-        #      sites = [i[0] for i in val]
-        #      #  for site in val:
-        #      for idx, site in enumerate(sites):
-        #          start_site = np.array(site[0])
-        #          end_site = np.array(site[1])
-        #          diff = abs(start_site - end_site)
-        #          if diff[0] in [1, self._L - 1]:
-        #              x_sites.append(sorted(tuple(site)))
-        #              x_configs_sites_idxs.append(configs[idx])
-        #          elif diff[1] in [1, self._L - 1]:
-        #              y_sites.append(sorted(tuple(site)))
-        #              y_configs_sites_idxs.append(configs[idx])
-        #      x_bonds[key] = [
-        #          np.array(x_sites, dtype=int).tolist(), x_configs_sites_idxs
-        #      ]
-        #      y_bonds[key] = [
-        #          np.array(y_sites, dtype=int).tolist(), y_configs_sites_idxs
-        #      ]
-        #
-        #      #  x_bonds[key] = np.array(x_sites, dtype=int).tolist()
-        #      #  y_bonds[key] = np.array(y_sites, dtype=int).tolist()
         return active_bonds, x_bonds, y_bonds
 
     def _set_config_data(self, T, config_idx):
@@ -269,7 +225,8 @@ class Bonds(WormSimulation):
         Args:
             T (float): temperature
         """
-        if type(T) is not str:
+        #  if type(T) is not str:
+        if not isinstance(T, str):
             T = str(T)
         #  import pdb
         #  pdb.set_trace()
@@ -390,7 +347,8 @@ class Bonds(WormSimulation):
                 after having performed a single renormalization group
                 `blocking` iteration.
         """
-        if type(T) is not str:
+        #  if type(T) is not str:
+        if not isinstance(T, str):
             T = str(T).rstrip('0')
         config = np.array(self._config_data[T][config_idx]).reshape(
             2*self._L, 2*self._L
@@ -540,7 +498,7 @@ class Bonds(WormSimulation):
             plt.clf()
             plt.close('all')
 
-        if mode == None:
+        if mode is None:
             plt.clf()
             fig = plt.figure(figsize=(8,8))
             ax = fig.add_subplot(1,1,1)
@@ -648,7 +606,7 @@ class Bonds(WormSimulation):
         return fig
 
 
-def main(argv):
+def main(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("-L", "--size", type=int,
                         help="Define the linear size of the lattice (DEFAULT:"
@@ -709,4 +667,3 @@ def main(argv):
 
 if __name__ == '__main__':
     main(sys.argv)
-

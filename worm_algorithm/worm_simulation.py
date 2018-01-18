@@ -19,9 +19,9 @@ class WormSimulation(object):
         if T_arr is None:
             self._T_range = np.arange(T_start, T_end, T_step)
         else:
-            if type (T_arr) == list:
+            if isinstance(T_arr, list):
                 T_arr = np.array(T_arr)
-            elif type(T_arr) == np.ndarray:
+            elif isinstance(T_arr, np.ndarray):
                 self._T_range = T_arr
             else:
                 raise ValueError("T_arr must either be a list or a numpy"
@@ -224,10 +224,8 @@ def main(argv):
     power = args.power
     if power is None:
         num_steps = 1E7
-    
     run = args.run_sim
     verbose = args.verbose
-    
     T_start = args.Tstart
     if T_start is None:
         T_start = 1.0
@@ -248,7 +246,3 @@ def main(argv):
 
 if __name__ == '__main__':
     main(sys.argv)
-
-
-
-

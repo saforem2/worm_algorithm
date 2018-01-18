@@ -24,7 +24,6 @@ std::tuple<int, int, int, int, int> bond_number(
 
 int main()
 {
-
     //read parameters from the input file
     int L;
     unsigned long int num_steps;
@@ -42,35 +41,19 @@ int main()
     init_genrand(seed);
     // double T_crit = 2/log(1+sqrt(2));
     double K = 1.0 / T, P_acc;
-
     double inv_K = 1.0 / K;
     int N = L * L;
     int tail = 0, head = 0, new_head;
     int nb, ibond, delta_nb, Nb = 0, Nb_tot = 0;
     unsigned long int step_num = 0, Z = 0;
     unsigned long int therm_steps = 0.1 * num_steps;
-    unsigned long int write_steps = 100;
+    unsigned long int write_steps = 500;
     double E_av = 0.0;
     double Z_av = 0.0;
     double Nb_av = 0.0;
     int bond_num, x1, x2, y1, y2;
     // double gamma = 1.75;
     // double zc = 2.17;
-
-    
-    // not-so-aggressive logging for T > T_crit
-    // if (T > 2.5) {
-    //   therm_steps *= 5;
-    //   write_steps *= 10;
-    // }
-    
-    // if (T < 2.2) {
-    //   therm_steps = num_steps / ;
-    // }
-    // if (T >= 2.3) {
-    //   therm_steps = num_steps / 10;
-    // }
-
     std::setprecision(2);
     std::string T_str = std::to_string(T);
     std::string L_str = std::to_string(L);
@@ -79,7 +62,7 @@ int main()
     std::string bond_map_file = std::string("../data/bond_map/lattice_")
       + L_str + std::string("/bond_map_") + L_str + std::string(".txt");
 
-    std::string bonds_file = std::string("../data/bonds/lattice_") + L_str 
+    std::string bonds_file = std::string("../data/bonds/lattice_") + L_str
       + std::string("/bonds_") + T_str_sub + std::string(".txt");
 
     std::string num_bonds_file = std::string("../data/num_bonds/lattice_")
@@ -87,7 +70,6 @@ int main()
 
     std::string observables_file = std::string("../data/observables/lattice_")
       + L_str + std::string("/observables_") + L_str + std::string(".txt");
-
 
     // build site->x and site->y tables
     int x[N], y[N];
@@ -204,9 +186,7 @@ int main()
     num_bonds_out.open(num_bonds_file, std::ofstream::app);
     num_bonds_out << L << " " << T << " " << Nb << "\n";
     num_bonds_out.close();
-
 } //end main
-
 
 /**
  * @brief method for computing the index of the bond connecting
