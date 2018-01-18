@@ -93,19 +93,30 @@ class CountBonds(object):
         bond_idxs = [
             (i, j) for i in range(w) for j in range(w) if (i + j) % 2 == 1
         ]
-
-        for config in data:
-            _config = config.reshape(w, w)
-            _config_bonds = [_config[i] for i in bond_idxs]
-            bc_arr.append(np.sum(_config_bonds))
-        bc_arr = np.array(bc_arr)
+        x = data.reshape(-1, w, w)
+        bc_arr = np.array([
+            np.sum([config[i] for i in bond_idxs]) for config in x
+        ])
         bc2_arr = bc_arr ** 2
-
         Nb_avg = np.mean(bc_arr)
         Nb2_avg = np.mean(bc2_arr)
         Nb_avg2 = Nb_avg ** 2
         delta_Nb = Nb2_avg - Nb_avg2
 
+        #  data_reshaped = data.reshape(-1, w, w)
+        #  bc_arr = np.array([np.sum(data_reshaped[i, bond_idxs]) for i in
+        #                    range(data_reshaped.shape[0])])
+        #  for config in data:
+        #      _config = config.reshape(w, w)
+        #      _config_bonds = [_config[i] for i in bond_idxs]
+        #      bc_arr.append(np.sum(_config_bonds))
+        #  bc_arr = np.array(bc_arr)
+        #  bc2_arr = bc_arr ** 2
+        #  Nb_avg = np.mean(bc_arr)
+        #  Nb2_avg = np.mean(bc2_arr)
+        #  Nb_avg2 = Nb_avg ** 2
+        #  delta_Nb = Nb2_avg - Nb_avg2
+        #
         return Nb_avg, delta_Nb
     
     def _count_bonds_with_err(self, data, num_blocks=10):
