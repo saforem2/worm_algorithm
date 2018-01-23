@@ -47,7 +47,7 @@ int main()
     int nb, ibond, delta_nb, Nb = 0, Nb_tot = 0;
     unsigned long int step_num = 0, Z = 0;
     unsigned long int therm_steps = 0.1 * num_steps;
-    unsigned long int write_steps = 500;
+    unsigned long int write_steps = 100;
     double E_av = 0.0;
     double Z_av = 0.0;
     double Nb_av = 0.0;
@@ -98,10 +98,6 @@ int main()
     // main Monte Carlo loop
     while(1) {
       if (tail == head) {
-        tail = (int)floor(genrand() * N);   // randomly choose new head, tail
-        head = tail;
-        Z += 1;   // new kick
-        Nb_tot -= Nb;   // remove Nb bonds from previous worm configuration
         if (step_num > therm_steps) {
           if (step_num % write_steps == 0) {
             Z_av = Z / (step_num * 1.0);
@@ -112,9 +108,7 @@ int main()
             observables_out << T << " " << E_av << " " << Z_av << " " 
               << Nb_av << " " << step_num << std::endl;
             observables_out.close();
-          }
 
-          if (step_num % write_steps == 0) {
             std::ofstream bonds_out;
             bonds_out.open(bonds_file, std::ofstream::app);
 
@@ -124,6 +118,10 @@ int main()
             bonds_out.close();
           }
         }
+        tail = (int)floor(genrand() * N);   // randomly choose new head, tail
+        head = tail;
+        Z += 1;   // new kick
+        Nb_tot -= Nb;   // remove Nb bonds from previous worm configuration
         if (step_num >= num_steps)
           break;
       }
