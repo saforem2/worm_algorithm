@@ -38,18 +38,22 @@ class CountBonds(object):
         self._verbose = verbose
         if block_val is None:
             self._width = 2 * L
-            self._data_dir = (
-                '../data/configs/{}_lattice/separated_data/'.format(L)
-            )
+            if data_dir is None:
+                self._data_dir = (
+                    '../data/configs/{}_lattice/separated_data/'.format(L)
+                )
+            else:
+                self._data_dir = data_dir
             if save_dir is None:
                 self._save_dir = '../data/bond_stats/{}_lattice/'.format(L)
         else:
             self._width = L
-            self._data_dir = (
-                '../data/blocked_configs/{}_lattice/double_bonds_{}/'.format(
-                    L, block_val
-                )
-            )
+            if data_dir is None:
+                self._data_dir = ('../data/blocked_configs/'
+                                  + '{}_lattice/double_bonds_{}/'.format(
+                                      L, block_val))
+            else:
+                self._data_dir = data_dir
             if save_dir is None:
                 self._save_dir = (
                     '../data/bond_stats/{}_lattice/double_bonds_{}/'.format(
@@ -88,14 +92,15 @@ class CountBonds(object):
             raise
 
     def _count_bonds(self, data):
-        bc_arr = []
+        #  bc_arr = []
         w = self._width
         bond_idxs = [
             (i, j) for i in range(w) for j in range(w) if (i + j) % 2 == 1
         ]
-        x = data.reshape(-1, w, w)
+        #  x = data.reshape(-1, w, w)
         bc_arr = np.array([
-            np.sum([config[i] for i in bond_idxs]) for config in x
+            np.sum([config[i] for i in bond_idxs]) for config in
+            data.reshape(-1, w, w)
         ])
         bc2_arr = bc_arr ** 2
         Nb_avg = np.mean(bc_arr)
