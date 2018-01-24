@@ -31,7 +31,7 @@ class CountBonds(object):
             performed.
     """
     def __init__(self, L, block_val=None, num_blocks=10, data_dir=None,
-                 save_dir=None, save=True, verbose=False):
+                 save_dir=None, save=True, load=False, verbose=False):
         self._L = L
         self._block_val = block_val
         self._num_blocks = num_blocks
@@ -46,6 +46,8 @@ class CountBonds(object):
                 self._data_dir = data_dir
             if save_dir is None:
                 self._save_dir = '../data/bond_stats/{}_lattice/'.format(L)
+            else:
+                self._save_dir = save_dir
         else:
             self._width = L
             if data_dir is None:
@@ -60,6 +62,8 @@ class CountBonds(object):
                         L, block_val
                     )
                 )
+            else:
+                self._save_dir = save_dir
         config_files = os.listdir(self._data_dir)
         self._config_files = sorted([
             self._data_dir + i for i in config_files if i.endswith('.txt')
@@ -68,7 +72,11 @@ class CountBonds(object):
             i.split('_')[-1].rstrip('.txt') for i in self._config_files
         ]
         self._temp_strings = [i.rstrip('0') for i in temp_strings]
-        self.count_bonds()
+        self.bond_stats = {}
+        if not load:
+            self.count_bonds()
+        else:
+            self._load()
         if save:
             self._save()
 
@@ -159,7 +167,6 @@ class CountBonds(object):
 
     def count_bonds(self):
         """Calculate bond statistics for all configuration data."""
-        self.bond_stats = {}
         for idx, config_file in enumerate(self._config_files):
             if self._verbose:
                 print("Reading in from: {}\n".format(config_file))
@@ -193,6 +200,17 @@ class CountBonds(object):
                                                   val[1],
                                                   val[2],
                                                   val[3]))
+    def _load(self, data_file=None):
+        """Load previously computed bond_stats data from .txt file."""
+        if data_file is None:
+            data_file = self._save_dir + 'bond_stats_{}.txt'.format(self._L)
+            raw_data = pd.read_csv(data_file, engine='c', header=None,
+                                   delim_whitespace=True).values
+        for row in raw_data:
+            key = str(row[0])
+            self.bond_stats[key] = [row[1], row[2], row[3], row[4]]
+
+
 
 def main(argv):
     parser = argparse.ArgumentParser()

@@ -34,7 +34,7 @@ class PrincipalComponent(object):
             performed.
     """
     def __init__(self, L, block_val=None, num_blocks=10, data_dir=None,
-                 save_dir=None, save=True, verbose=False):
+                 save_dir=None, save=True, load=False, verbose=False):
         self._L = L
         self._block_val = block_val
         self._num_blocks = num_blocks
@@ -74,12 +74,12 @@ class PrincipalComponent(object):
         ])
         temp_strings = [i.split('_')[-1].rstrip('.txt') for i in config_files]
         self._temp_strings = [i.rstrip('0') for i in temp_strings]
-
-        self._PCA()
-        #  self._leading_eig_val_avg = self.average_data()
-        #  self._leading_eig_val_err = list(self._err.values())
-        if save:
-            self._save()
+        if not load:
+            self._PCA()
+            if save:
+                self._save()
+        else:
+            self._load()
 
     def _get_data(self, _file=None):
         """ Read in configuration data from file. """
@@ -145,28 +145,10 @@ class PrincipalComponent(object):
                 self._err[key] = jackknife_err(y_i=eig_pairs_rs,
                                                y_full=eig_pairs[0][0],
                                                num_blocks=self._num_blocks)
-        #  self._eig_vals = OrderedDict(
-        #      self._eig_vals.items(), key=lambda t: t[0]
-        #  )
-        #  self._leading_eig_val = OrderedDict(
-        #      self._leading_eig_val.items(), key=lambda t: t[0]
-        #  )
-
-    #  def average_data(self):
-    #      """ Average leading eigenvalue data and use jackknife resampling for
-    #      error bars.
-    #      """
-    #      leading_eig_val_avg = []
-    #      #leading_eig_val_err = []
-    #      for val in self._leading_eig_val.values():
-    #          if
-    #          leading_eig_val_avg.append(np.mean(val))
-    #          #  leading_eig_val_err.append(
-    #          #      jackknife_stats(np.array(val), np.std)[2]
-    #          #  t
-    #      return leading_eig_val_avg#, leading_eig_val_err
 
     def _save(self):
+        """Save PCA results from calculation to .txt file to avoid repeating
+        calculation."""
         if not os.path.exists(self._save_dir):
             os.makedirs(self._save_dir)
         save_file = self._save_dir + 'leading_eigenvalue_{}.txt'.format(self._L)
@@ -182,6 +164,24 @@ class PrincipalComponent(object):
         with open(save_file, 'w') as f:
             for key, val in self._eig_vals.items():
                 f.write("{} {} {}\n".format(key, val[0][0], self._err[key]))
+
+    def _load(self, data_dir=None):
+        """Load PCA results from .txt file instead of recalculating results."""
+        if data_dir is None:
+            data_file = (
+                self._save_dir + 'leading_eigenvalue_{}.txt'.format(self._L)
+            )
+            try:
+                raw_data = pd.read_csv(data_file, engine='c', header=None,
+                                       delim_whitespace=True).values
+            except:
+                print("Unable to read from {}".format(data_file))
+                raise
+        for row in raw_data:
+            key = str(row[0])
+            self._eig_vals[key] = [row[1], row[2]]
+            self._err[key] = row[2]
+
 
 def main(argv):
     parser = argparse.ArgumentParser()
