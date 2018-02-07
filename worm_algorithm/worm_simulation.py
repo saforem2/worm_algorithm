@@ -12,9 +12,11 @@ class WormSimulation(object):
     simulation, and uses file I/O to gather physically important quantities.
     """
     def __init__(self, L=32, run=True, num_steps=1E7, decay_steps=False,
-                 verbose=True, T_start=1., T_end=3.5, T_step=0.1, T_arr=None):
+                 verbose=True, T_start=1., T_end=3.5, T_step=0.1, T_arr=None,
+                 bond_flag=1):
         self._L = L
         self._verbose = verbose
+        self._bond_flag = bond_flag
         self._sim_dir = os.getcwd()
         if T_arr is None:
             self._T_range = np.arange(T_start, T_end, T_step)
@@ -59,8 +61,8 @@ class WormSimulation(object):
         try:
             self._input_file = '../data/setup/input.txt'
             with open(self._input_file, 'w') as f:
-                f.write("%i %.12f %i %.32f\n" % (
-                    self._L, T, num_steps, seed
+                f.write("%i %.12f %i %.32f %i\n" % (
+                    self._L, T, num_steps, seed, self._bond_flag
                 ))
         except IOError:
             raise "Unable to locate input file in {}".format(setup_dir)

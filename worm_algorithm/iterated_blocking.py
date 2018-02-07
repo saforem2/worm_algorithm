@@ -3,7 +3,7 @@ import pandas as pd
 import os
 from operator import xor
 
-def _block_config(config, num_block_steps=1):
+def _block_config(config, num_block_steps=1, double_bonds_value=None):
     """Create (iterated) blocked config from un-blocked configu using
     approximate (1 + 1 = 0) blocking scheme.
 
@@ -29,11 +29,21 @@ def _block_config(config, num_block_steps=1):
     for site in blocked_sites:
         i = site[0]
         j = site[1]
+        #  look at the number of active external bonds lejving the block to the
+        #  right (ext_x_bonds) and upwards (ext_y_bonds)
         ext_x_bonds = [config[2*i, 2*j+3], config[2*i+2, 2*j+3]]
         ext_y_bonds = [config[2*i+3, 2*j], config[2*i+3, 2*j+2]]
-        ext_x_bonds_active = xor(ext_x_bonds[0], ext_x_bonds[1])
-        ext_y_bonds_active = xor(ext_y_bonds[0], ext_y_bonds[1])
-        active_site = ext_x_bonds_active or ext_y_bonds_active
+        if double_bonds_value is None:
+            ext_x_bonds_active = xor(ext_x_bonds[0], ext_x_bonds[1])
+            ext_y_bonds_active = xor(ext_y_bonds[0], ext_y_bonds[1])
+            active_site = ext_x_bonds_active or ext_y_bonds_active
+        else:
+            if ext_x_bonds == [1, 1]:
+                ext_x_bonds_active = double_bonds_value
+            if ext_y_bonds == [1, 1]:
+                ext_y_bonds_active = double_bonds_value
+            if ext_x_bonds_active or ext_y_bonds_active:
+                active_site = double_bonds_value
         blocked_config[i, j] = active_site
         blocked_config[i, j+1] = ext_x_bonds_active
         blocked_config[i+1, j] = ext_y_bonds_active
@@ -58,20 +68,21 @@ def block_configs(file):
     """
     print("Reading from {}".format(file))
     try:
-        temp = file.split('/')[-1].split('_')[-1].rstrip('.txt')
-        configs = pd.read_csv(
-            file, header=None, engine='c', delim_whitespace=True, index_col=0, 
-        ).values
-        L = int(np.sqrt(len(configs[0].flatten()))/2)
-        blocked_configs = []
-        for config in configs:
-            blocked_configs.append(_block_config(config))
-        blocked_configs = np.array(blocked_configs)
-        L_blocked = int(np.sqrt(len(blocked_configs[0].flatten()))/2)
-        out_dir = '../data/iterated_blocking/{}_lattice/blocked_{}'.format(
-            L, L_blocked
-        )
-        save_blocked_configs(blocked_configs, temp, out_dir=out_dir)
+            #  temp = file.splitsx./{]}('/')[-1].split('_')[-1].rstrip('.txt')
+            temp = file.split('/')[-1].split('_')[-1].rstrip('.txt')
+            configs = pd.read_csv(
+                file, header=None, engine='c', delim_whitespace=True, index_col=0, 
+            ).values
+            L = int(np.sqrt(len(configs[0].flatten()))/2)
+            blocked_configs = []
+            for config in configs:
+                blocked_configs.append(_block_config(config))
+            blocked_configs = np.array(blocked_configs)
+            L_blocked = int(np.sqrt(len(blocked_configs[0].flatten()))/2)
+            out_dir = '../data/iterated_blocking/{}_lattice/blocked_{}'.format(
+                L, L_blocked
+            )
+            save_blocked_configs(blocked_configs, temp, out_dir=out_dir)
     except IOError:
         print("Unable to read from: {}".format(file))
         raise
