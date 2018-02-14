@@ -33,17 +33,17 @@ class Bonds(WormSimulation):
         T_start (float):
             Starting temperature for simulation.
     """
-    def __init__(self, L, run=False, num_steps=1E7, decay_steps=False,
-                 verbose=True, T_start=1., T_end=3.5, T_step=0.1, T_arr=None,
+    def __init__(self, L, run=False, num_steps=1E7, verbose=True,
+                 T_start=1., T_end=3.5, T_step=0.1, T_arr=None,
                  block_val=0, write=True, write_blocked=True):
         """Initialize Bonds class, which can also be used to run the
         simulation."""
         if T_arr is None:
-            WormSimulation.__init__(self, L, run, num_steps, decay_steps,
-                                    verbose, T_start, T_end, T_step)
+            WormSimulation.__init__(self, L, run, num_steps, verbose,
+                                    T_start, T_end, T_step)
         else:
-            WormSimulation.__init__(self, L, run, num_steps, decay_steps,
-                                    verbose, T_arr=T_arr)
+            WormSimulation.__init__(self, L, run, num_steps, verbose, 
+                                    T_arr=T_arr)
         self._L = L
         self._num_bonds = 2*self._L*self._L
         self._bonds_dir = '../data/bonds/lattice_{}/'.format(self._L)
@@ -102,7 +102,7 @@ class Bonds(WormSimulation):
         end_sites = self._raw_bonds[:, 3:]
         for idx, key in enumerate(keys):
             try:
-                _map[key].append([tuple(start_sites[idx]),
+                _map[key].extend([tuple(start_sites[idx]),
                                   tuple(end_sites[idx])])
             except KeyError:
                 _map[key] = [tuple(start_sites[idx]), tuple(end_sites[idx])]

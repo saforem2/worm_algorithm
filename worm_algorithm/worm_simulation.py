@@ -11,9 +11,8 @@ class WormSimulation(object):
     'worm_ising_2d.cpp' for the computationally intensive Monte-Carlo
     simulation, and uses file I/O to gather physically important quantities.
     """
-    def __init__(self, L=32, run=True, num_steps=1E7, decay_steps=False,
-                 verbose=True, T_start=1., T_end=3.5, T_step=0.1, T_arr=None,
-                 bond_flag=1):
+    def __init__(self, L=32, run=True, num_steps=1E7, verbose=True,
+                 T_start=1., T_end=3.5, T_step=0.1, T_arr=None, bond_flag=1):
         self._L = L
         self._num_steps = num_steps
         self._verbose = verbose
@@ -23,18 +22,6 @@ class WormSimulation(object):
             self._T_range = np.arange(T_start, T_end, T_step)
         else:
             self._T_range = T_arr
-            #  if isinstance(T_arr, list):
-            #      T_arr = np.array(T_arr)
-            #  elif isinstance(T_arr, np.ndarray):
-            #      self._T_range = T_arr
-            #  else:
-            #      raise ValueError("T_arr must either be a list or a numpy"
-            #                       "ndarray")
-        #  if decay_steps:
-        #      self._num_steps = np.linspace(num_steps, num_steps/10,
-        #                                    len(self._T_range))
-        #  else:
-        #      self._num_steps = len(self._T_range)*[num_steps]
         self._run = run
         #  self._display
         self._observables_dir = '../data/observables/lattice_{}/'.format(L)
