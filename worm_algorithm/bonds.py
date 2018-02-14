@@ -102,10 +102,10 @@ class Bonds(WormSimulation):
         end_sites = self._raw_bonds[:, 3:]
         for idx, key in enumerate(keys):
             try:
-                _map[key].append([tuple(start_site[idx]),
-                                  tuple(start_site[idx])])
+                _map[key].append([tuple(start_sites[idx]),
+                                  tuple(end_sites[idx])])
             except KeyError:
-                _map[key] = [tuple(start_site[idx]), tuple(start_site[idx])]
+                _map[key] = [tuple(start_sites[idx]), tuple(end_sites[idx])]
         #  for i in range(len(self._raw_bonds)):
         #      key = self._raw_bonds[i, 0]
         #      sites = self._raw_bonds[i, 1:]

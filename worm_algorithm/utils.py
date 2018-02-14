@@ -8,8 +8,8 @@ import os
 
 def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None):
     markers = ['s', 'H', 'd', 'v', 'p']
-    colors = ['#2A9Df8', '#FF920B', '#65e41d', '#be67ff', '#EE2324']
-    markeredgecolors = ['#0256a3', '#ed4c18',  '#00B000', '#6633cc',  '#Db1f0e']
+    colors = ['#2A9Df8', '#FF920B', '#65e41d', '#be67ff', '#ff7e79']
+    markeredgecolors = ['#0256a3', '#ed4c18',  '#00B000', '#6633cc',  '#ee2324']
     x_values = values['x']
     y_values = values['y']
     assert x_values.shape == y_values.shape, ('x and y data have different'
