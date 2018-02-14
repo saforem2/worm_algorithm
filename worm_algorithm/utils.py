@@ -1,5 +1,61 @@
 import numpy as np
 from sklearn.model_selection import KFold
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+#1D92cb
+
+def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None):
+    markers = ['s', 'H', 'd', 'v', 'p']
+    colors = ['#2A9Df8', '#FF920B', '#65e41d', '#be67ff', '#EE2324']
+    markeredgecolors = ['#0256a3', '#ed4c18',  '#00B000', '#6633cc',  '#Db1f0e']
+    x_values = values['x']
+    y_values = values['y']
+    assert x_values.shape == y_values.shape, ('x and y data have different'
+                                              + ' shapes.')
+    y_err = values['y_err']
+    fig_labels = labels['fig_labels']
+    x_label = labels['x_label']
+    y_label = labels['y_label']
+    x_lim = limits.get('x_lim')
+    y_lim = limits.get('y_lim')
+    num_graphs = len(fig_labels)
+    
+    fig, ax = plt.subplots()
+    if Tc_line is not None:
+        ax.axvline(x=Tc_line, linestyle='--', color='k')
+    for i in range(num_graphs):
+        ax.errorbar(x_values[i], y_values[i], yerr=y_err[i], label=fig_labels[i],
+                    marker=markers[i], markersize=5, fillstyle='full',
+                    color=colors[i], markeredgecolor=markeredgecolors[i],
+                    ls='-', lw=2., elinewidth=2., capsize=2., capthick=2.)
+    leg = ax.legend(loc='best', markerscale=1.5, fontsize=14)
+    ax.set_xlabel(x_label, fontsize=16)
+    ax.set_ylabel(y_label, fontsize=16)
+    if x_lim is not None:
+        ax.set_xlim(x_lim[0], x_lim[1])
+    if y_lim is not None:
+        ax.set_ylim(y_lim[0], y_lim[1])
+    
+    fig.tight_layout()
+    print(f"Saving file to: {out_file}")
+    fig.savefig(out_file, dpi=400, bbox_inches='tight')
+    return fig, ax
+
+def get_plot_num(out_dir):
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    existing = [
+        int(i.split('_')[-1].rstrip('.png')) for i in os.listdir(out_dir) if
+        i.endswith('.png')
+    ]
+    try:
+        latest_num = max(existing)
+    except ValueError:
+        latest_num = 0
+    return latest_num + 1
+
 
 
 def block_resampling(data, num_blocks):

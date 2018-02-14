@@ -18,6 +18,11 @@
 #include <stdlib.h>
 #include "mt19937ar.c"
 
+bool fexists(const std::string& filename) {
+  std::ifstream ifile(filename.c_str());
+  return (bool)ifile;
+}
+
 std::tuple<int, int, int, int, int> bond_number(
     int i1, int i2, int *x, int *y, int L
 );
@@ -29,13 +34,14 @@ int main()
     unsigned long int num_steps;
     double T;
     double seed;
+    int bond_flag;
     // int write_obs;
     FILE *in_file = fopen("../data/setup/input.txt","r");
     if (in_file == NULL ){
         printf("Error! Could not open input file (input.txt: L, T, num_steps)\n");
         return 2;
     }
-    fscanf(in_file,"%i %lf %li %lf", &L, &T, &num_steps, &seed);
+    fscanf(in_file,"%i %lf %li %lf %i", &L, &T, &num_steps, &seed, &bond_flag);
     fclose(in_file);
 
     init_genrand(seed);
@@ -47,7 +53,7 @@ int main()
     int nb, ibond, delta_nb, Nb = 0, Nb_tot = 0;
     unsigned long int step_num = 0, Z = 0;
     unsigned long int therm_steps = 0.1 * num_steps;
-    unsigned long int write_steps = 500;
+    unsigned long int write_steps = 100;
     double E_av = 0.0;
     double Z_av = 0.0;
     double Nb_av = 0.0;
@@ -95,39 +101,38 @@ int main()
     }
 
 
+    std::ofstream observables_out;
     // main Monte Carlo loop
+    observables_out.open(observables_file, std::ofstream::app);
+    // if (bond_flag != 0) {
+    std::ofstream bonds_out;
+    bonds_out.open(bonds_file, std::ofstream::app);
+    // }
     while(1) {
       if (tail == head) {
-        tail = (int)floor(genrand() * N);   // randomly choose new head, tail
-        head = tail;
-        Z += 1;   // new kick
-        Nb_tot -= Nb;   // remove Nb bonds from previous worm configuration
-        if (step_num > therm_steps) {
-          if (step_num % write_steps == 0) {
-            Z_av = Z / (step_num * 1.0);
-            E_av = Nb_tot * T / (Z * N);
-            Nb_av = Nb_tot / (Z * N);
-            std::ofstream observables_out;
-            observables_out.open(observables_file, std::ofstream::app);
-            observables_out << T << " " << E_av << " " << Z_av << " " 
-              << Nb_av << " " << step_num << std::endl;
-            observables_out.close();
+          if (step_num > therm_steps) {
+              if (step_num % write_steps == 0) {
+                  Z_av = Z / (step_num * 1.0);
+                  E_av = Nb_tot * T / (Z * N);
+                  Nb_av = Nb_tot / (Z * N);
+                  observables_out << T << " " << E_av << " " << Z_av << " " 
+                      << Nb_av << " " << step_num << std::endl;
+                  if (bond_flag != 0) {
+                      for (int b=0; b < N * 2; b++) {
+                          bonds_out << b << " " << bonds[b] << std::endl;
+                      }
+                  } 
+              }
           }
-
-          if (step_num % write_steps == 0) {
-            std::ofstream bonds_out;
-            bonds_out.open(bonds_file, std::ofstream::app);
-
-            for (int b=0; b < N * 2; b++) {
-              bonds_out << b << " " << bonds[b] << std::endl;
-            }
-            bonds_out.close();
-          }
-        }
-        if (step_num >= num_steps)
-          break;
+          // randomly choose new head, tail
+          tail = (int)floor(genrand() * N);
+          head = tail;
+          Z += 1;   // new kick
+          // remove Nb bonds from previous worm configuration
+          Nb_tot -= Nb;
+          if (step_num >= num_steps)
+              break;
       }
-      
       // shift move -- start
       new_head = nbr[head][(int)floor(genrand() * 4)];
       std::tie(ibond, x1, x2, y1, y2) = bond_number(head, new_head, x, y, L);
@@ -150,25 +155,30 @@ int main()
       }
     ++step_num; // shift move -- end
     } // end MC loop
+    observables_out.close();
 
-    std::ofstream bonds_out;
-    bonds_out.open(bonds_file, std::ofstream::app);
-    for (int b=0; b < N * 2; b++) {
-      bonds_out << b << " " << bonds[b] << std::endl;
+    if (bond_flag != 0) {
+        std::ofstream bonds_out;
+        bonds_out.open(bonds_file, std::ofstream::app);
+        for (int b=0; b < N * 2; b++) {
+            bonds_out << b << " " << bonds[b] << std::endl;
+        } 
+        bonds_out.close();
     }
-    bonds_out.close();
 
-    std::ofstream bonds_map_out;
-    bonds_map_out.open(bond_map_file);
-    for (int i = 0; i < N; ++i) {
-      for (int j = 0; j < 4; ++j) {
-        int neighbor = nbr[i][j];
-        std::tie(bond_num, x1, x2, y1, y2) = bond_number(i, neighbor, x, y, L);
-        bonds_map_out << bond_num << " " << x1 << " " << y1 << " " << x2 << " "
-          << y2 << std::endl;
-      }
+    if (!fexists(bond_map_file)) {
+        std::ofstream bonds_map_out;
+        bonds_map_out.open(bond_map_file);
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                int neighbor = nbr[i][j];
+                std::tie(bond_num, x1, x2, y1, y2) = bond_number(i, neighbor, x, y, L);
+                bonds_map_out << bond_num << " " << x1 << " " 
+                    << y1 << " " << x2 << " " << y2 << std::endl;
+            }
+        }
+        bonds_map_out.close();
     }
-    bonds_map_out.close();
 
     Z_av = Z / (step_num * 1.0);
     //E_av = - 1.0 * tanh(K) * (2*L*L + (Nb_tot/(sinh(K)*sinh(K))));
