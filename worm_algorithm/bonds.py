@@ -97,15 +97,24 @@ class Bonds(WormSimulation):
         self._get_raw_bonds()
         self._raw_bonds = np.array(self._raw_bonds, dtype=int)
         _map = {}
-        for i in range(len(self._raw_bonds)):
-            key = self._raw_bonds[i, 0]
-            sites = self._raw_bonds[i, 1:]
-            start_site = sites[:2]
-            end_site = sites[2:]
+        keys = self._raw_bonds[:, 0]
+        start_sites = self._raw_bonds[:, 1:3]
+        end_sites = self._raw_bonds[:, 3:]
+        for idx, key in enumerate(keys):
+            try:
+                _map[key].append([tuple(start_site[idx]),
+                                  tuple(start_site[idx])])
+            except KeyError:
+                _map[key] = [tuple(start_site[idx]), tuple(start_site[idx])]
+        #  for i in range(len(self._raw_bonds)):
+        #      key = self._raw_bonds[i, 0]
+        #      sites = self._raw_bonds[i, 1:]
+        #      start_site = sites[:2]
+        #      end_site = sites[2:]
             #  try:
             #      _map[key].append([tuple(start_site), tuple(end_site)])
             #  except KeyError:
-            _map[key] = [tuple(start_site), tuple(end_site)]
+            #  _map[key] = [tuple(start_site), tuple(end_site)]
         return _map
 
     def _get_bonds(self):
@@ -606,9 +615,9 @@ class Bonds(WormSimulation):
         return fig
 
 
-def main(**kwargs):
+def main(args=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("-L", "--size", type=int,
+    parser.add_argument("-L", "--size", type=int, required='True',
                         help="Define the linear size of the lattice (DEFAULT:"
                              "16)")
     parser.add_argument("-r", "--run_sim", action="store_true",
@@ -666,4 +675,4 @@ def main(**kwargs):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main(sys.argv[1:])

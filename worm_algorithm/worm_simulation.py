@@ -15,24 +15,26 @@ class WormSimulation(object):
                  verbose=True, T_start=1., T_end=3.5, T_step=0.1, T_arr=None,
                  bond_flag=1):
         self._L = L
+        self._num_steps = num_steps
         self._verbose = verbose
         self._bond_flag = bond_flag
         self._sim_dir = os.getcwd()
         if T_arr is None:
             self._T_range = np.arange(T_start, T_end, T_step)
         else:
-            if isinstance(T_arr, list):
-                T_arr = np.array(T_arr)
-            elif isinstance(T_arr, np.ndarray):
-                self._T_range = T_arr
-            else:
-                raise ValueError("T_arr must either be a list or a numpy"
-                                 "ndarray")
-        if decay_steps:
-            self._num_steps = np.linspace(num_steps, num_steps/10,
-                                          len(self._T_range))
-        else:
-            self._num_steps = len(self._T_range)*[num_steps]
+            self._T_range = T_arr
+            #  if isinstance(T_arr, list):
+            #      T_arr = np.array(T_arr)
+            #  elif isinstance(T_arr, np.ndarray):
+            #      self._T_range = T_arr
+            #  else:
+            #      raise ValueError("T_arr must either be a list or a numpy"
+            #                       "ndarray")
+        #  if decay_steps:
+        #      self._num_steps = np.linspace(num_steps, num_steps/10,
+        #                                    len(self._T_range))
+        #  else:
+        #      self._num_steps = len(self._T_range)*[num_steps]
         self._run = run
         #  self._display
         self._observables_dir = '../data/observables/lattice_{}/'.format(L)
@@ -116,7 +118,8 @@ class WormSimulation(object):
         print('runs -- start\n')
         run_number = 0
         for T_idx, T in enumerate(self._T_range):
-            num_steps = self._num_steps[T_idx]
+            #  num_steps = self._num_steps[T_idx]
+            num_steps = self._num_steps
             if self._verbose:
                 print("Running L = {}, T = {}, num_steps:" "{}".format(
                     str(self._L), str(T), num_steps

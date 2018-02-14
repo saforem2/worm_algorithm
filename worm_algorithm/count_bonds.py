@@ -30,8 +30,9 @@ class CountBonds(object):
             Whether or not to display information as the analysis is being
             performed.
     """
-    def __init__(self, L, block_val=None, num_blocks=10, data_dir=None,
-                 save_dir=None, save=True, load=False, verbose=False):
+    def __init__(self, L, block_val=None, num_blocks=10,
+                 data_dir=None, save_dir=None, data_file=None,
+                 save=True, load=False, verbose=False):
         self._L = L
         self._block_val = block_val
         self._num_blocks = num_blocks
@@ -76,7 +77,7 @@ class CountBonds(object):
         if not load:
             self.count_bonds()
         else:
-            self._load()
+            self._load(data_file)
         if save:
             self._save()
 
@@ -168,6 +169,7 @@ class CountBonds(object):
     def count_bonds(self):
         """Calculate bond statistics for all configuration data."""
         for idx, config_file in enumerate(self._config_files):
+            data = None
             if self._verbose:
                 print("Reading in from: {}\n".format(config_file))
             #  key = self._temp_strings[idx]
@@ -177,6 +179,7 @@ class CountBonds(object):
             data = self._get_configs(config_file)
             val, err = self._count_bonds_with_err(data, self._num_blocks)
             self.bond_stats[key] = [val[0], err[0], val[1], err[1]]
+            del(data)
 
 
     def _save(self):
@@ -204,15 +207,16 @@ class CountBonds(object):
         """Load previously computed bond_stats data from .txt file."""
         if data_file is None:
             data_file = self._save_dir + 'bond_stats_{}.txt'.format(self._L)
-            raw_data = pd.read_csv(data_file, engine='c', header=None,
-                                   delim_whitespace=True).values
+        print(f"Reading from: {data_file}")
+        raw_data = pd.read_csv(data_file, engine='c', header=None,
+                               delim_whitespace=True).values
         for row in raw_data:
             key = str(row[0])
             self.bond_stats[key] = [row[1], row[2], row[3], row[4]]
 
 
 
-def main(argv):
+def main(args=None):
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-L", "--size", type=int, required=True,

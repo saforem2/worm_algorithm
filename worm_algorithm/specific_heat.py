@@ -100,6 +100,7 @@ class SpecificHeat(object):
                 avg_energy_rs = []
                 for block in data_rs:
                     avg_energy_rs.append(np.mean(block))
+                #  error = jackknife_var()
                 error = jackknife_err(y_i = avg_energy_rs,
                                       y_full = avg_energy,
                                       num_blocks=self._num_blocks)
