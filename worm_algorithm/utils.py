@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import numpy as np
 from sklearn.model_selection import KFold
 import pandas as pd
@@ -6,37 +7,56 @@ import os
 
 #1D92cb
 
-def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None):
-    markers = ['s', 'H', 'd', 'v', 'p']
-    colors = ['#2A9Df8', '#FF920B', '#65e41d', '#be67ff', '#ff7e79']
-    markeredgecolors = ['#0256a3', '#ed4c18',  '#00B000', '#6633cc',  '#ee2324']
-    x_values = values['x']
-    y_values = values['y']
+def errorbar_plot(values, labels, out_file,
+                  limits=None, Tc_line=None, ax=None):
+    """Create plot with errorbars using custom colorscheme and markers."""
+    markers = np.array(['s', 'H', 'd', 'v', 'p']*2)
+    #colors = ['#2A9Df8', '#FF920B', '#65e41d', '#be67ff', '#ff7e79']*2
+    colors = np.array(['#2A9Df8', '#FF920B', '#65e41d', '#be67ff',
+                       '#ff5b55']*2)
+    #colors.extend(colors)
+    markeredgecolors = np.array(['#0256a3', '#ed4c18',  '#00B000', '#6633cc',
+                                 '#ee2324']*2)
+    #markeredgecolors.extend(markeredgecolors[::-1])
+    markerfills = ['full']*5
+    markerfills.extend(['full']*5)
+    alphas = [1.]*5
+    alphas.extend([0.7]*5)
+    linestyles = ['-']*5
+    linestyles.extend([':']*5)
+    markersizes = [5]*5
+    markersizes.extend([10]*5)
+    x_values = values.get('x')
+    y_values = values.get('y')
+    y_err = values.get('y_err')
+    x_err = values.get('x_err')
     assert x_values.shape == y_values.shape, ('x and y data have different'
-                                              + ' shapes.')
-    y_err = values['y_err']
-    fig_labels = labels['fig_labels']
-    x_label = labels['x_label']
-    y_label = labels['y_label']
-    x_lim = limits.get('x_lim')
-    y_lim = limits.get('y_lim')
+                                            + ' shapes.')
+    fig_labels = labels.get('fig_labels')
     num_graphs = len(fig_labels)
-    
-    fig, ax = plt.subplots()
+    x_label = labels.get('x_label')
+    y_label = labels.get('y_label')
+    if ax is None:
+        fig, ax = plt.subplots()
     if Tc_line is not None:
         ax.axvline(x=Tc_line, linestyle='--', color='k')
     for i in range(num_graphs):
         ax.errorbar(x_values[i], y_values[i], yerr=y_err[i], label=fig_labels[i],
-                    marker=markers[i], markersize=5, fillstyle='full',
-                    color=colors[i], markeredgecolor=markeredgecolors[i],
-                    ls='-', lw=2., elinewidth=2., capsize=2., capthick=2.)
+                    marker=markers[i], markersize=markersizes[i],
+                    fillstyle=markerfills[i], color=colors[i], 
+                    markeredgecolor=markeredgecolors[i],
+                    ls=linestyles[i], lw=2., elinewidth=2.,
+                    capsize=2., capthick=2., alpha=alphas[i])
     leg = ax.legend(loc='best', markerscale=1.5, fontsize=14)
     ax.set_xlabel(x_label, fontsize=16)
     ax.set_ylabel(y_label, fontsize=16)
-    if x_lim is not None:
-        ax.set_xlim(x_lim[0], x_lim[1])
-    if y_lim is not None:
-        ax.set_ylim(y_lim[0], y_lim[1])
+    if limits is not None:
+        x_lim = limits.get('x_lim')
+        y_lim = limits.get('y_lim')
+        if x_lim is not None:
+            ax.set_xlim(x_lim[0], x_lim[1])
+        if y_lim is not None:
+            ax.set_ylim(y_lim[0], y_lim[1])
     
     fig.tight_layout()
     print(f"Saving file to: {out_file}")

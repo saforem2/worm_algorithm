@@ -38,19 +38,26 @@ class Bonds(WormSimulation):
                  block_val=0, write=True, write_blocked=True):
         """Initialize Bonds class, which can also be used to run the
         simulation."""
-        if T_arr is None:
-            WormSimulation.__init__(self, L, run, num_steps, verbose,
-                                    T_start, T_end, T_step)
-        else:
-            WormSimulation.__init__(self, L, run, num_steps, verbose, 
-                                    T_arr=T_arr)
+        #  if T_arr is None:
+        #      WormSimulation.__init__(self, L, run, num_steps, verbose,
+        #                              T_start, T_end, T_step)
+        #  else:
+        #      WormSimulation.__init__(self, L, run, num_steps, verbose,
+        #                              T_arr=T_arr)
         self._L = L
         self._num_bonds = 2*self._L*self._L
-        self._bonds_dir = '../data/bonds/lattice_{}/'.format(self._L)
-        self._bond_map_dir = '../data/bond_map/lattice_{}/'.format(self._L)
-        self.__map_file = self._bond_map_dir + 'bond_map_{}.txt'.format(L)
+        self._num_steps = num_steps
+        self._verbose = verbose
+        #  self._bond_flag = bond_flag
+        self._set_dirs()
+        if T_arr is None:
+            self._T_range = np.arange(T_start, T_end, T_step)
+        else:
+            self._T_range = T_arr
+        self._run = run
         self._map = self._get_map()
-        self._dict = self._get_bonds()
+        #  self._dict = self._get_bonds()
+        self._dict = self.load_bonds()
         self._mapped_bonds = self._map_bonds()
         tup = self._get_active_bonds()
         self._active_bonds, self._active_x_bonds, self._active_y_bonds = tup
@@ -62,6 +69,77 @@ class Bonds(WormSimulation):
             self.write_config_data()
         if write_blocked:
             self.write_blocked_config_data()
+    
+    def _set_dirs(self):
+        self._sim_dir = os.getcwd()
+        self._bonds_dir = f"../data/bonds/lattice_{self._L}/"
+        self._observables_dir = f"../data/observables/lattice_{self._L}/"
+        self._config_dir = f"../data/bonds/lattice_{self._L}/"
+        self._num_bonds_dir = f"../data/num_bonds/lattice_{self._L}/"
+        self._bond_map_dir = f"../data/bond_map_lattice_{self._L}/"
+        self.__map_file = self._bond_map_dir + f"bond_map_{self._L}.txt"
+        self._setup_dir = "../data/setup/"
+        if not os.path.exists(self._observables_dir):
+            os.makedirs(self._observables_dir)
+        if not os.path.exists(self._config_dir):
+            os.makedirs(self._config_dir)
+        if not os.path.exists(self._num_bonds_dir):
+            os.makedirs(self._num_bonds_dir)
+        if not os.path.exists(self._bond_map_dir):
+            os.makedirs(self._bond_map_dir)
+        if not os.path.exists(self._setup_dir):
+            os.makedirs(self._setup_dir)
+
+    def prepare_input(self, T, num_steps):
+        """Create txt file to be read in as parameters for the C++ method."""
+        seed = T + np.random.randint(1E4) * np.random.rand()
+        try:
+            input_file = self._setup_dir + 'input.txt'
+            with open(input_file, 'w') as f:
+                f.write("%i %.12f %i %.32f %i\n" % (self._L, T, num_steps,
+                                                    seed, self._bond_flag))
+        except IOError:
+            print(f"Unable to locate {input_file} in {self._setup_dir}")
+            raise
+
+    def remove_old_data(self):
+        """Remove old configuration data from previous runs."""
+        try:
+            files_ = os.listdir(self._config_dir)
+            for _file in files_:
+                if _file.endswith('.txt'):
+                    os.remove(self._config_dir + _file)
+        except ValueError:
+            print(f"{self._config_dir} is already empty. Exiting.")
+            raise
+    
+    def make(self):
+        """Call the makefile and compile the C++ method, creating the
+        executable.
+        
+        NOTE: The C++ method completes the simulation for a fixed temperature,
+        defined in 'input.txt', which is recreated for each run.
+        """
+        try:
+            print("compilation -- start\n")
+            os.chdir('./src')
+            os.system('make clean')
+            os.system('make')
+            os.chdir('../')
+            print('compilation -- done\n')
+            self._prog = './src/worm_ising_2d'
+            if not os.path.isfile(self._prog):
+                print(f"ERROR: Unable to find executable file {self._prog}")
+                raise IOError
+        except (IOError, OSError):
+            print("Directory structure invalid. Exiting.")
+            raise
+
+    def run(self):
+        """Main method for running the simulation and storing relevant
+        variables."""
+        pass
+
 
     def _get_raw_bonds(self):
         """ Read in raw bond/site data.
@@ -116,6 +194,66 @@ class Bonds(WormSimulation):
             #  except KeyError:
             #  _map[key] = [tuple(start_site), tuple(end_site)]
         return _map
+
+    def _load_bonds(self, file):
+        """Read in bond configuration from file and map to pairs of sites.
+
+        NOTE: Each file corresponds to a particular temperature and will
+        contain multiple configurations obtained from the C++ simulation. 
+
+        Returns:
+            config_dict (dict): Dictionary containing each distinct bond
+            configuration. config_dict.keys() enumerate each of the distinct
+            configurations, and config_dict.values() is a dictionary of the
+            form:
+                {bond_idx_0: status,
+                 bond_idx_1: status,
+                 ...
+                 bond_idx_N: status}
+            where the bond indices run from 0 to 2 * L * L, and the status
+            corresponds to its occupancy (status == 0 implies bond is not
+            active)
+        """
+        bonds = pd.read_csv(file, header=None, engine='c',
+                            delim_whitespace=True).values
+        num_configs = bonds.shape[0] / self._num_bonds
+        split_configs = np.split(bonds, num_configs)
+        config_dict = {}
+        for idx, config in enumerate(split_configs):
+            bond_dict = {}
+            for row in config:
+                b_idx = row[0]
+                bond_dict[b_idx] = row[1]
+            config_dict[idx] = bond_dict
+        return config_dict
+
+    def load_bonds(self):
+        """ Read in bond data for each temperature.
+
+        Returns:
+            _dict (dict): Dictionary containing active bonds and their indices
+            for each temperature. _dict has the following attributes:
+                _dict.keys(): Temperature (str)
+                _dict.values(): [bond_idx, status], where status = 1 if bond is
+                active, 0 otherwise.
+        """
+        try:
+            _dict = {}
+            bond_files = [
+                self._bonds_dir + f for f in os.listdir(self._bonds_dir)
+                if f.endswith('.txt')
+            ]
+            split_files = [i.split('/') for i in bond_files]
+            temp_strings = [i[-1].split('_')[-1].rstrip('.txt').rstrip('0') for
+                            i in split_files]
+            for idx, f in enumerate(bond_files):
+                key = temp_strings[idx]
+                _dict[key] = self._load_bonds(f)
+            return _dict
+        except OSError:
+            print("Unable to locate bond files. Exiting.")
+            raise
+
 
     def _get_bonds(self):
         """ Read in bond data for each temperature.
