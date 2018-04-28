@@ -111,7 +111,7 @@ class CountBonds(object):
             np.sum([config[i] for i in bond_idxs]) for config in
             data.reshape(-1, w, w)
         ])
-        bc_arr = bc_arr[np.where(bc_arr != 0)]
+        #  bc_arr = bc_arr[np.where(bc_arr != 0)]
         bc2_arr = bc_arr ** 2
         Nb_avg = np.mean(bc_arr)
         Nb2_avg = np.mean(bc2_arr)
