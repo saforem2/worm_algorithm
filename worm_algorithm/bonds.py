@@ -97,15 +97,25 @@ class Bonds(WormSimulation):
         self._get_raw_bonds()
         self._raw_bonds = np.array(self._raw_bonds, dtype=int)
         _map = {}
-        keys = self._raw_bonds[:, 0]
-        start_sites = self._raw_bonds[:, 1:3]
-        end_sites = self._raw_bonds[:, 3:]
-        for idx, key in enumerate(keys):
-            try:
-                _map[key].append([tuple(start_site[idx]),
-                                  tuple(start_site[idx])])
-            except KeyError:
-                _map[key] = [tuple(start_site[idx]), tuple(start_site[idx])]
+        for i in range(len(self._raw_bonds)):
+            key = self._raw_bonds[i, 0]
+            sites = self._raw_bonds[i, 1:]
+            start_site = sites[:2]
+            end_site = sites[2:]
+            _map[key] = [tuple(start_site), tuple(end_site)]
+        #########################################
+        #      BROKEN BELOW
+        #  keys = self._raw_bonds[:, 0]
+        #  start_sites = self._raw_bonds[:, 1:3]
+        #  end_sites = self._raw_bonds[:, 3:]
+        #  for idx, key in enumerate(keys):
+        #      try:
+        #          _map[key].append([tuple(start_site[idx]),
+        #                            tuple(start_site[idx])])
+        #      except KeyError:
+        #          _map[key] = [tuple(start_site[idx]), tuple(start_site[idx])]
+        #########################################
+
         #  for i in range(len(self._raw_bonds)):
         #      key = self._raw_bonds[i, 0]
         #      sites = self._raw_bonds[i, 1:]
