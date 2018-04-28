@@ -24,7 +24,7 @@ class CountBonds(object):
             Directory containing configuration data to be analyzed.
         _save_dir : (str)
             Directory where resulting bond_statistics data is to be written to.
-        _write : bool
+        _save : bool
             Whether or not to save the bond_statistics data.
         _verbose : bool
             Whether or not to display information as the analysis is being
@@ -111,6 +111,7 @@ class CountBonds(object):
             np.sum([config[i] for i in bond_idxs]) for config in
             data.reshape(-1, w, w)
         ])
+        bc_arr = bc_arr[np.where(bc_arr != 0)]
         bc2_arr = bc_arr ** 2
         Nb_avg = np.mean(bc_arr)
         Nb2_avg = np.mean(bc2_arr)

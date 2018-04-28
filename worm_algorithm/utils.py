@@ -60,6 +60,8 @@ def get_plot_num(out_dir):
 
 def block_resampling(data, num_blocks):
     """ Block-resample data to return num_blocks samples of original data. """
+    if not isinstance(data, np.ndarray):
+        data = np.array(data)
     num_samples = data.shape[0]
     if num_samples < 1:
         raise ValueError("Data must have at least one sample.")

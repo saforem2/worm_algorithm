@@ -57,10 +57,10 @@ class Bonds(WormSimulation):
         self._x_bonds = {}
         self._y_bonds = {}
         self._config_data = self.set_config_data()
-        self._blocked_config_data = self.block_configs(block_val)
         if write:
             self.write_config_data()
         if write_blocked:
+            self._blocked_config_data = self.block_configs(block_val)
             self.write_blocked_config_data()
 
     def _get_raw_bonds(self):
