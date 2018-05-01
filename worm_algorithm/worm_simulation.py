@@ -107,10 +107,10 @@ class WormSimulation(object):
         for T_idx, T in enumerate(self._T_range):
             #  num_steps = self._num_steps[T_idx]
             num_steps = self._num_steps
-            if self._verbose:
-                print("Running L = {}, T = {}, num_steps:" "{}".format(
-                    str(self._L), str(T), num_steps
-                ))
+            #  if self._verbose:
+            print("Running L = {}, T = {}, num_steps:" " {}".format(
+                str(self._L), str(T), num_steps
+            ))
             self.prepare_input(T, num_steps)
             process = subprocess.Popen([self._prog])
             process.wait()

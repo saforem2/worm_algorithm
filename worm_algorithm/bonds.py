@@ -33,17 +33,18 @@ class Bonds(WormSimulation):
         T_start (float):
             Starting temperature for simulation.
     """
-    def __init__(self, L, run=False, num_steps=1E7, verbose=True,
-                 T_start=1., T_end=3.5, T_step=0.1, T_arr=None,
-                 block_val=0, write=True, write_blocked=True):
+    def __init__(self, L, run=False, num_steps=1E7, decay_steps=False,
+                 verbose=True, T_start=1., T_end=3.5, T_step=0.1, T_arr=None,
+                 block_configs=False, block_val=0,
+                 write=True, write_blocked=False):
         """Initialize Bonds class, which can also be used to run the
         simulation."""
         if T_arr is None:
-            WormSimulation.__init__(self, L, run, num_steps, verbose,
-                                    T_start, T_end, T_step)
+            WormSimulation.__init__(self, L, run, num_steps, decay_steps,
+                                    verbose, T_start, T_end, T_step)
         else:
-            WormSimulation.__init__(self, L, run, num_steps, verbose, 
-                                    T_arr=T_arr)
+            WormSimulation.__init__(self, L, run, num_steps, decay_steps,
+                                    verbose, T_arr=T_arr)
         self._L = L
         self._num_bonds = 2*self._L*self._L
         self._bonds_dir = '../data/bonds/lattice_{}/'.format(self._L)
@@ -57,7 +58,8 @@ class Bonds(WormSimulation):
         self._x_bonds = {}
         self._y_bonds = {}
         self._config_data = self.set_config_data()
-        self._blocked_config_data = self.block_configs(block_val)
+        if block_configs:
+            self._blocked_config_data = self.block_configs(block_val)
         if write:
             self.write_config_data()
         if write_blocked:
@@ -97,15 +99,25 @@ class Bonds(WormSimulation):
         self._get_raw_bonds()
         self._raw_bonds = np.array(self._raw_bonds, dtype=int)
         _map = {}
-        keys = self._raw_bonds[:, 0]
-        start_sites = self._raw_bonds[:, 1:3]
-        end_sites = self._raw_bonds[:, 3:]
-        for idx, key in enumerate(keys):
-            try:
-                _map[key].extend([tuple(start_sites[idx]),
-                                  tuple(end_sites[idx])])
-            except KeyError:
-                _map[key] = [tuple(start_sites[idx]), tuple(end_sites[idx])]
+        for i in range(len(self._raw_bonds)):
+            key = self._raw_bonds[i, 0]
+            sites = self._raw_bonds[i, 1:]
+            start_site = sites[:2]
+            end_site = sites[2:]
+            _map[key] = [tuple(start_site), tuple(end_site)]
+        #########################################
+        #      BROKEN BELOW
+        #  keys = self._raw_bonds[:, 0]
+        #  start_sites = self._raw_bonds[:, 1:3]
+        #  end_sites = self._raw_bonds[:, 3:]
+        #  for idx, key in enumerate(keys):
+        #      try:
+        #          _map[key].append([tuple(start_site[idx]),
+        #                            tuple(start_site[idx])])
+        #      except KeyError:
+        #          _map[key] = [tuple(start_site[idx]), tuple(start_site[idx])]
+        #########################################
+
         #  for i in range(len(self._raw_bonds)):
         #      key = self._raw_bonds[i, 0]
         #      sites = self._raw_bonds[i, 1:]

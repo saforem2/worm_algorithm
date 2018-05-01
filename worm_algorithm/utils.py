@@ -6,10 +6,15 @@ import os
 
 #1D92cb
 
-def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None):
+def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None,
+                  reverse_colors=False):
     markers = ['s', 'H', 'd', 'v', 'p']
     colors = ['#2A9Df8', '#FF920B', '#65e41d', '#be67ff', '#ff7e79']
     markeredgecolors = ['#0256a3', '#ed4c18',  '#00B000', '#6633cc',  '#ee2324']
+    if reverse_colors:
+        colors = colors[::-1]
+        markeredgecolors = markeredgecolors[::-1]
+        markers = markers[::-1]
     x_values = values['x']
     y_values = values['y']
     assert x_values.shape == y_values.shape, ('x and y data have different'
