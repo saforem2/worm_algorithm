@@ -12,10 +12,6 @@ def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None,
     colors = ['#2A9Df8', '#FF920B', '#65e41d', '#be67ff', '#ff7e79', '#959595']
     markeredgecolors = ['#0256a3', '#ed4c18',  '#00B000', '#6633cc',
                         '#ee2324','#1c2022']
-    if reverse_colors:
-        colors = colors[::-1]
-        markeredgecolors = markeredgecolors[::-1]
-        markers = markers[::-1]
     x_values = values['x']
     y_values = values['y']
     assert x_values.shape == y_values.shape, ('x and y data have different'
@@ -31,15 +27,24 @@ def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None,
         y_err = num_graphs*[0]
     x_lim = limits.get('x_lim')
     y_lim = limits.get('y_lim')
+    if reverse_colors:
+        colors = colors[:num_graphs][::-1]
+        markeredgecolors = markeredgecolors[:num_graphs][::-1]
+        markers = markers[:num_graphs][::-1]
     
     fig, ax = plt.subplots()
     if Tc_line is not None:
         ax.axvline(x=Tc_line, linestyle='--', color='k')
     for i in range(num_graphs):
-        ax.errorbar(x_values[i], y_values[i], yerr=y_err[i], label=fig_labels[i],
-                    marker=markers[i], markersize=5, fillstyle='full',
-                    color=colors[i], markeredgecolor=markeredgecolors[i],
-                    ls='-', lw=2., elinewidth=2., capsize=2., capthick=2.)
+        try:
+            ax.errorbar(x_values[i], y_values[i], yerr=y_err[i], label=fig_labels[i],
+                        marker=markers[i], markersize=5, fillstyle='full',
+                        color=colors[i], markeredgecolor=markeredgecolors[i],
+                        ls='-', lw=2., elinewidth=2., capsize=2., capthick=2.)
+        except ValueError:
+        #    continue
+            import pdb
+            pdb.set_trace()
     leg = ax.legend(loc='best', markerscale=1.5, fontsize=14)
     ax.set_xlabel(x_label, fontsize=16)
     ax.set_ylabel(y_label, fontsize=16)
