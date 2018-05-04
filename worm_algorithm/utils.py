@@ -8,9 +8,10 @@ import os
 
 def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None,
                   reverse_colors=False):
-    markers = ['s', 'H', 'd', 'v', 'p']
-    colors = ['#2A9Df8', '#FF920B', '#65e41d', '#be67ff', '#ff7e79']
-    markeredgecolors = ['#0256a3', '#ed4c18',  '#00B000', '#6633cc',  '#ee2324']
+    markers = ['s', 'H', 'd', 'v', 'p', 'P']
+    colors = ['#2A9Df8', '#FF920B', '#65e41d', '#be67ff', '#ff7e79', '#959595']
+    markeredgecolors = ['#0256a3', '#ed4c18',  '#00B000', '#6633cc',
+                        '#ee2324','#1c2022']
     if reverse_colors:
         colors = colors[::-1]
         markeredgecolors = markeredgecolors[::-1]
@@ -19,13 +20,17 @@ def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None,
     y_values = values['y']
     assert x_values.shape == y_values.shape, ('x and y data have different'
                                               + ' shapes.')
-    y_err = values['y_err']
     fig_labels = labels['fig_labels']
     x_label = labels['x_label']
     y_label = labels['y_label']
+    num_graphs = len(fig_labels)
+    try:
+        y_err = values['y_err']
+    except KeyError:
+        #  y_err = num_graphs*[np.zeros(y_values.shape)]
+        y_err = num_graphs*[0]
     x_lim = limits.get('x_lim')
     y_lim = limits.get('y_lim')
-    num_graphs = len(fig_labels)
     
     fig, ax = plt.subplots()
     if Tc_line is not None:
