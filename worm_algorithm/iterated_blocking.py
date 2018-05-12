@@ -29,7 +29,7 @@ def _block_config(config, num_block_steps=1, double_bonds_value=None):
     for site in blocked_sites:
         i = site[0]
         j = site[1]
-        #  look at the number of active external bonds lejving the block to the
+        #  look at the number of active external bonds leaving the block to the
         #  right (ext_x_bonds) and upwards (ext_y_bonds)
         ext_x_bonds = [config[2*i, 2*j+3], config[2*i+2, 2*j+3]]
         ext_y_bonds = [config[2*i+3, 2*j], config[2*i+3, 2*j+2]]

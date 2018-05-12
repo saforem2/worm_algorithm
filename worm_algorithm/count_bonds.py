@@ -65,6 +65,9 @@ class CountBonds(object):
                 )
             else:
                 self._save_dir = save_dir
+        if not os.path.exists(self._save_dir):  # ensure save_dir exists
+            os.makedirs(self._save_dir)         # create directory if not
+
         config_files = os.listdir(self._data_dir)
         self._config_files = sorted([
             self._data_dir + i for i in config_files if i.endswith('.txt')
@@ -182,11 +185,26 @@ class CountBonds(object):
             self.bond_stats[key] = [val[0], err[0], val[1], err[1]]
             del(data)
 
+    #  def _save_batch(self, data):
+        """Save in progress bond_stats data to .txt file."""
+        #  save_file = self._save_dir + f'bond_stats_{self._L}_in_progress.txt'
+        #  save_file_copy = save_file + '.bak'
+        #  orig_exists = os.path.exists(save_file)
+        #  copy exists = os.path.exists(save_file_copy)
+        #  if orig exists:
+        #      shutil.copy(save_file, save_file_copy)
+        #      if copy_exists:
+        #          os.remove(save_file)
+        #  ordered_bond_stats = OrderedDict(sorted(self.bond_stats.items(),
+        #                                          key=lambda t: t[0]))
+        #  with open(save_file, 'w') as f:
+        #      for key, val in ordered_bond_stats.items():
+        #          f.write(f'{key} {val[0]} {val[1]} {val[2]} {val[3]}')
+
+
 
     def _save(self):
         """Save bond_stats data to .txt file."""
-        if not os.path.exists(self._save_dir):
-            os.makedirs(self._save_dir)
         save_file = self._save_dir + 'bond_stats_{}.txt'.format(self._L)
         save_file_copy = save_file + '.bak'
         orig_exists = os.path.exists(save_file)

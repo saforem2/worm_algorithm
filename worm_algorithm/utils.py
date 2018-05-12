@@ -7,6 +7,7 @@ import os
 #1D92cb
 
 def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None,
+                  legend_loc=None, markersize=5, num_graphs=None, 
                   reverse_colors=False):
     markers = ['s', 'H', 'd', 'v', 'p', 'P']
     colors = ['#2A9Df8', '#FF920B', '#65e41d', '#be67ff', '#ff7e79', '#959595']
@@ -19,7 +20,12 @@ def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None,
     fig_labels = labels['fig_labels']
     x_label = labels['x_label']
     y_label = labels['y_label']
-    num_graphs = len(fig_labels)
+    if legend_loc is None:
+        legend_loc = 'best'
+    if num_graphs is None:
+        num_graphs = len(fig_labels)
+    else:
+        num_graphs = num_graphs
     try:
         y_err = values['y_err']
     except KeyError:
@@ -37,15 +43,16 @@ def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None,
         ax.axvline(x=Tc_line, linestyle='--', color='k')
     for i in range(num_graphs):
         try:
-            ax.errorbar(x_values[i], y_values[i], yerr=y_err[i], label=fig_labels[i],
-                        marker=markers[i], markersize=5, fillstyle='full',
+            ax.errorbar(x_values[i], y_values[i], yerr=y_err[i],
+                        label=fig_labels[i], marker=markers[i],
+                        markersize=markersize, fillstyle='full',
                         color=colors[i], markeredgecolor=markeredgecolors[i],
                         ls='-', lw=2., elinewidth=2., capsize=2., capthick=2.)
         except ValueError:
         #    continue
             import pdb
             pdb.set_trace()
-    leg = ax.legend(loc='best', markerscale=1.5, fontsize=14)
+    leg = ax.legend(loc=legend_loc, markerscale=1.5, fontsize=14)
     ax.set_xlabel(x_label, fontsize=16)
     ax.set_ylabel(y_label, fontsize=16)
     if x_lim is not None:

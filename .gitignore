@@ -4,6 +4,7 @@ data_copy/*
 data_01_11_0549/*
 worm_algorithm/src/worm_ising_2d
 worm_algorithm/5itergraphter.ipynb
+worm_algorithm/image_analysis/data/*
 
 *.pyc
 *.tex
