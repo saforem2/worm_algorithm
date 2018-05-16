@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.misc
-import math
 import itertools
 
 def show(image):
@@ -13,30 +12,29 @@ def show(image):
 class Image(object):
     """Class to identify boundaries between black and white pixels in image.
     """
-    def __init__(self, image_file):
+    def __init__(self, image, from_file=False):
         #self.cutoff = cutoff
-        try:
-            self._image_orig = scipy.misc.imread(image_file, "mode=L")
-        except FileNotFoundError:
-            raise f"Unable to load from {image_file}"
-        self._Nx, self._Ny = self._image_orig.shape
-        self._image_flat = self._image_orig.flatten()
+        if from_file:
+            try:
+                self._image_orig = scipy.misc.imread(image, "mode=L")
+            except FileNotFoundError:
+                raise f"Unable to load from {image}"
+        else:
+            self._image_orig = scipy.misc.bytescale(image)
+        image_shape = self._image_orig.shape
+        if len(image_shape) == 1:
+            self._Nx = int(np.sqrt(image_shape))
+            self._Ny = self._Nx
+            self._image_flat = self._image_orig
+        else:
+            self._Nx, self._Ny = self._image_orig.shape
+            self._image_flat = self._image_orig.flatten()
         self._image = np.reshape(1 - self._image_flat / 255.0,
                                  (self._Nx, self._Ny))
         self._image_cropped = None
         self._image_bw = None
         self._image_links = None
         #self._original = self._image.copy()
-
-    #  def show(self, image=None):
-    #      """Create figure containing image, return figure and axes instances."""
-    #      if image is None:
-    #          image = self._image
-    #      fig, ax = plt.subplots()
-    #      img = ax.imshow(image, cmap='Greys', aspect=1,
-    #                      interpolation='none')
-    #      plt.colorbar(img)
-    #      return fig, ax
 
     def crop(self, x_start, y_start, x_end, y_end):
         """Crop image from (x_start, y_start) to (x_end, y_end)."""
