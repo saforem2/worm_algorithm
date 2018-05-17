@@ -10,6 +10,9 @@ worm_algorithm/bonds_broken.py
 worm_algorithm/image_analysis/yannick/*
 worm_algorithm/simulation.py
 worm_algorithm/utils/*
+image_analysis/data/*
+image_analysis/yannick/*
+image_analysis/__init__.py
 
 *.pyc
 *.tex

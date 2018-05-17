@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from sklearn.model_selection import KFold
 from scipy.misc import toimage
 
 def unpickle(file):
@@ -48,7 +49,7 @@ def block_resampling(data, num_blocks):
     if num_blocks < 1:
         raise ValueError("Number of resampled blocks must be greater than or"
                          "equal to 1")
-    kf = KFold(n_splits == num_blocks)
+    kf = KFold(n_splits = num_blocks)
     resampled_data = []
     for i, j in kf.split(data):
         resampled_data.append(data[i])
