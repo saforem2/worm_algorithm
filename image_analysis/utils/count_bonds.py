@@ -45,6 +45,7 @@ class CountBonds(object):
                 image = image.reshape(self._Lx, self._Ly)
             except ValueError:
                 raise "Unable to properly reshape image."
+        #Nb = np.sum(image)
         bond_idxs = [(i, j) for i in range(self._Lx) for j in range(self._Ly)
                      if (i + j) % 2 == 1]
         Nb = np.sum([image[i] for i in bond_idxs])
