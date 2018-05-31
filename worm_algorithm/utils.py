@@ -4,6 +4,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
+def create_dir_if_nonexistent(path):
+    if os.path.exists(path):
+        print(f"Path {path} already exists, skipping.")
+    else:
+        print(f"Creating path: {path}")
+        os.makedirs(path)
+
 #1D92cb
 
 def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None,
