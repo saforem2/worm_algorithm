@@ -32,39 +32,39 @@ class CountBonds(object):
     """
     def __init__(self, L, block_val=None, num_blocks=10,
                  data_dir=None, save_dir=None, data_file=None,
-                 save=True, load=False, verbose=False):
+                 save=False, load=False, verbose=False):
         self._L = L
         self._block_val = block_val
         self._num_blocks = num_blocks
         self._verbose = verbose
-        if block_val is None:
-            self._width = 2 * L
-            if data_dir is None:
-                self._data_dir = (
-                    '../data/configs/{}_lattice/separated_data/'.format(L)
-                )
-            else:
-                self._data_dir = data_dir
-            if save_dir is None:
-                self._save_dir = '../data/bond_stats/{}_lattice/'.format(L)
-            else:
-                self._save_dir = save_dir
+        #  if block_val is None:
+        self._width = 2 * L
+        if data_dir is None:
+            self._data_dir = (
+                '../data/configs/{}_lattice/separated_data/'.format(L)
+            )
         else:
-            self._width = L
-            if data_dir is None:
-                self._data_dir = ('../data/blocked_configs/'
-                                  + '{}_lattice/double_bonds_{}/'.format(
-                                      L, block_val))
-            else:
-                self._data_dir = data_dir
-            if save_dir is None:
-                self._save_dir = (
-                    '../data/bond_stats/{}_lattice/double_bonds_{}/'.format(
-                        L, block_val
-                    )
-                )
-            else:
-                self._save_dir = save_dir
+            self._data_dir = data_dir
+        if save_dir is None:
+            self._save_dir = '../data/bond_stats/{}_lattice/'.format(L)
+        else:
+            self._save_dir = save_dir
+        #  else:
+        #      self._width = L
+        #      if data_dir is None:
+        #          self._data_dir = ('../data/blocked_configs/'
+        #                            + '{}_lattice/double_bonds_{}/'.format(
+        #                                L, block_val))
+        #      else:
+        #          self._data_dir = data_dir
+        #      if save_dir is None:
+        #          self._save_dir = (
+        #              '../data/bond_stats/{}_lattice/double_bonds_{}/'.format(
+        #                  L, block_val
+        #              )
+        #          )
+        #      else:
+        #          self._save_dir = save_dir
         if not os.path.exists(self._save_dir):  # ensure save_dir exists
             os.makedirs(self._save_dir)         # create directory if not
 
@@ -79,10 +79,11 @@ class CountBonds(object):
         self.bond_stats = {}
         if not load:
             self.count_bonds()
+            self._save()
         else:
             self._load(data_file)
-        if save:
-            self._save()
+        #  if save:
+        #      self._save()
 
     def _get_configs(self, _file):
         """ Load worm configuration(s) from .txt file.
