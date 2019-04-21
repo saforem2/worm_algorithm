@@ -24,7 +24,7 @@ class CountBonds(object):
             Directory containing configuration data to be analyzed.
         _save_dir : (str)
             Directory where resulting bond_statistics data is to be written to.
-        _write : bool
+        _save : bool
             Whether or not to save the bond_statistics data.
         _verbose : bool
             Whether or not to display information as the analysis is being
@@ -32,39 +32,42 @@ class CountBonds(object):
     """
     def __init__(self, L, block_val=None, num_blocks=10,
                  data_dir=None, save_dir=None, data_file=None,
-                 save=True, load=False, verbose=False):
+                 save=False, load=False, verbose=False):
         self._L = L
         self._block_val = block_val
         self._num_blocks = num_blocks
         self._verbose = verbose
-        if block_val is None:
-            self._width = 2 * L
-            if data_dir is None:
-                self._data_dir = (
-                    '../data/configs/{}_lattice/separated_data/'.format(L)
-                )
-            else:
-                self._data_dir = data_dir
-            if save_dir is None:
-                self._save_dir = '../data/bond_stats/{}_lattice/'.format(L)
-            else:
-                self._save_dir = save_dir
+        #  if block_val is None:
+        self._width = 2 * L
+        if data_dir is None:
+            self._data_dir = (
+                '../data/configs/{}_lattice/separated_data/'.format(L)
+            )
         else:
-            self._width = L
-            if data_dir is None:
-                self._data_dir = ('../data/blocked_configs/'
-                                  + '{}_lattice/double_bonds_{}/'.format(
-                                      L, block_val))
-            else:
-                self._data_dir = data_dir
-            if save_dir is None:
-                self._save_dir = (
-                    '../data/bond_stats/{}_lattice/double_bonds_{}/'.format(
-                        L, block_val
-                    )
-                )
-            else:
-                self._save_dir = save_dir
+            self._data_dir = data_dir
+        if save_dir is None:
+            self._save_dir = '../data/bond_stats/{}_lattice/'.format(L)
+        else:
+            self._save_dir = save_dir
+        #  else:
+        #      self._width = L
+        #      if data_dir is None:
+        #          self._data_dir = ('../data/blocked_configs/'
+        #                            + '{}_lattice/double_bonds_{}/'.format(
+        #                                L, block_val))
+        #      else:
+        #          self._data_dir = data_dir
+        #      if save_dir is None:
+        #          self._save_dir = (
+        #              '../data/bond_stats/{}_lattice/double_bonds_{}/'.format(
+        #                  L, block_val
+        #              )
+        #          )
+        #      else:
+        #          self._save_dir = save_dir
+        if not os.path.exists(self._save_dir):  # ensure save_dir exists
+            os.makedirs(self._save_dir)         # create directory if not
+
         config_files = os.listdir(self._data_dir)
         self._config_files = sorted([
             self._data_dir + i for i in config_files if i.endswith('.txt')
@@ -76,10 +79,11 @@ class CountBonds(object):
         self.bond_stats = {}
         if not load:
             self.count_bonds()
+            self._save()
         else:
             self._load(data_file)
-        if save:
-            self._save()
+        #  if save:
+        #      self._save()
 
     def _get_configs(self, _file):
         """ Load worm configuration(s) from .txt file.
@@ -111,6 +115,7 @@ class CountBonds(object):
             np.sum([config[i] for i in bond_idxs]) for config in
             data.reshape(-1, w, w)
         ])
+        #  bc_arr = bc_arr[np.where(bc_arr != 0)]
         bc2_arr = bc_arr ** 2
         Nb_avg = np.mean(bc_arr)
         Nb2_avg = np.mean(bc2_arr)
@@ -181,11 +186,26 @@ class CountBonds(object):
             self.bond_stats[key] = [val[0], err[0], val[1], err[1]]
             del(data)
 
+    #  def _save_batch(self, data):
+        """Save in progress bond_stats data to .txt file."""
+        #  save_file = self._save_dir + f'bond_stats_{self._L}_in_progress.txt'
+        #  save_file_copy = save_file + '.bak'
+        #  orig_exists = os.path.exists(save_file)
+        #  copy exists = os.path.exists(save_file_copy)
+        #  if orig exists:
+        #      shutil.copy(save_file, save_file_copy)
+        #      if copy_exists:
+        #          os.remove(save_file)
+        #  ordered_bond_stats = OrderedDict(sorted(self.bond_stats.items(),
+        #                                          key=lambda t: t[0]))
+        #  with open(save_file, 'w') as f:
+        #      for key, val in ordered_bond_stats.items():
+        #          f.write(f'{key} {val[0]} {val[1]} {val[2]} {val[3]}')
+
+
 
     def _save(self):
         """Save bond_stats data to .txt file."""
-        if not os.path.exists(self._save_dir):
-            os.makedirs(self._save_dir)
         save_file = self._save_dir + 'bond_stats_{}.txt'.format(self._L)
         save_file_copy = save_file + '.bak'
         orig_exists = os.path.exists(save_file)

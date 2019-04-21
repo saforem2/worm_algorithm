@@ -35,7 +35,8 @@ class Bonds(WormSimulation):
     """
     def __init__(self, L, run=False, num_steps=1E7, decay_steps=False,
                  verbose=True, T_start=1., T_end=3.5, T_step=0.1, T_arr=None,
-                 block_val=0, write=True, write_blocked=True):
+                 block_configs=False, block_val=0,
+                 write=True, write_blocked=False):
         """Initialize Bonds class, which can also be used to run the
         simulation."""
         if T_arr is None:
@@ -57,7 +58,8 @@ class Bonds(WormSimulation):
         self._x_bonds = {}
         self._y_bonds = {}
         self._config_data = self.set_config_data()
-        self._blocked_config_data = self.block_configs(block_val)
+        if block_configs:
+            self._blocked_config_data = self.block_configs(block_val)
         if write:
             self.write_config_data()
         if write_blocked:

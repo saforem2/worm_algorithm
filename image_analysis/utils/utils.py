@@ -1,94 +1,46 @@
+import os
 import numpy as np
 from sklearn.model_selection import KFold
-import pandas as pd
-import matplotlib.pyplot as plt
-import os
+from scipy.misc import toimage
 
-def create_dir_if_nonexistent(path):
-    if os.path.exists(path):
-        print(f"Path {path} already exists, skipping.")
-    else:
-        print(f"Creating path: {path}")
-        os.makedirs(path)
+def unpickle(file):
+    """Method for opening CIFAR-10 dataset. Returns dictionary."""
+    import pickle
+    with open(file, 'rb') as f:
+        dict = pickle.load(f, encoding='bytes')
+    return dict
 
-#1D92cb
+def reshape_cifar10_image(image):
+    """Method for reshaping CIFAR-10 images into array of shape:
+    [num_images, 32, 32, 3]. """
+    new_image = np.zeros((32, 32, 3))
+    new_image[:, :, 0] = image[:1024].reshape(32, 32)
+    new_image[:, :, 1] = image[1024:2048].reshape(32, 32)
+    new_image[:, :, 2] = image[2048:3072].reshape(32, 32)
+    return new_image
 
-def errorbar_plot(values, labels, out_file, limits=None, Tc_line=None,
-                  legend_loc=None, markersize=5, num_graphs=None, 
-                  reverse_colors=False):
-    markers = ['s', 'H', 'd', 'v', 'p', 'P']
-    colors = ['#2A9Df8', '#FF920B', '#65e41d', '#be67ff', '#ff7e79', '#959595']
-    markeredgecolors = ['#0256a3', '#ed4c18',  '#00B000', '#6633cc',
-                        '#ee2324','#1c2022']
-    x_values = values['x']
-    y_values = values['y']
-    assert x_values.shape == y_values.shape, ('x and y data have different'
-                                              + ' shapes.')
-    fig_labels = labels['fig_labels']
-    x_label = labels['x_label']
-    y_label = labels['y_label']
-    if legend_loc is None:
-        legend_loc = 'best'
-    if num_graphs is None:
-        num_graphs = len(fig_labels)
-    else:
-        num_graphs = num_graphs
-    try:
-        y_err = values['y_err']
-    except KeyError:
-        #  y_err = num_graphs*[np.zeros(y_values.shape)]
-        y_err = num_graphs*[0]
-    x_lim = limits.get('x_lim')
-    y_lim = limits.get('y_lim')
-    if reverse_colors:
-        colors = colors[:num_graphs][::-1]
-        markeredgecolors = markeredgecolors[:num_graphs][::-1]
-        markers = markers[:num_graphs][::-1]
-    
-    fig, ax = plt.subplots()
-    if Tc_line is not None:
-        ax.axvline(x=Tc_line, linestyle='--', color='k')
-    for i in range(num_graphs):
-        try:
-            ax.errorbar(x_values[i], y_values[i], yerr=y_err[i],
-                        label=fig_labels[i], marker=markers[i],
-                        markersize=markersize, fillstyle='full',
-                        color=colors[i], markeredgecolor=markeredgecolors[i],
-                        ls='-', lw=2., elinewidth=2., capsize=2., capthick=2.)
-        except ValueError:
-        #    continue
-            import pdb
-            pdb.set_trace()
-    leg = ax.legend(loc=legend_loc, markerscale=1.5, fontsize=14)
-    ax.set_xlabel(x_label, fontsize=16)
-    ax.set_ylabel(y_label, fontsize=16)
-    if x_lim is not None:
-        ax.set_xlim(x_lim[0], x_lim[1])
-    if y_lim is not None:
-        ax.set_ylim(y_lim[0], y_lim[1])
-    
-    fig.tight_layout()
-    print(f"Saving file to: {out_file}")
-    fig.savefig(out_file, dpi=400, bbox_inches='tight')
-    return fig, ax
+def  process_cifar10_image(image):
+    """Reshape and convert CIFAR-10 images to greyscale."""
+    reshaped_image = reshape_cifar10_image(image)
+    image_ = toimage(reshaped_image)
+    image_ = image_.convert("L")
+    image_arr = np.array(image_.getdata()).reshape(image_.size[1],
+                                                   image_.size[0])
+    return image_arr
 
 def get_plot_num(out_dir):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    existing = [
-        int(i.split('_')[-1].rstrip('.png')) for i in os.listdir(out_dir) if
-        i.endswith('.png')
-    ]
+    existing = [int(i.split('_')[-1].rstrip('.png')) for i in
+                os.listdir(out_dir) if i.endswith('.png')]
     try:
         latest_num = max(existing)
     except ValueError:
         latest_num = 0
     return latest_num + 1
 
-
-
 def block_resampling(data, num_blocks):
-    """ Block-resample data to return num_blocks samples of original data. """
+    """Block-resample data to return num_blocks samples of original data. """
     if not isinstance(data, np.ndarray):
         data = np.array(data)
     num_samples = data.shape[0]
@@ -96,7 +48,7 @@ def block_resampling(data, num_blocks):
         raise ValueError("Data must have at least one sample.")
     if num_blocks < 1:
         raise ValueError("Number of resampled blocks must be greater than or"
-                         "equal to 1.")
+                         "equal to 1")
     kf = KFold(n_splits = num_blocks)
     resampled_data = []
     for i, j in kf.split(data):
@@ -104,38 +56,36 @@ def block_resampling(data, num_blocks):
     return resampled_data
 
 def jackknife(x, func, num_blocks=100):
-    """ Jackknife estimate of the estimator function. """
+    """Jackknife estimate of the estimator functiion."""
     n = len(x)
     block_size = n // num_blocks
     idx = np.arange(0, n, block_size)
-    return np.sum(func(x[idx!=i]) for i in range(n))/float(n)
+    return np.sum(func(x[idx!=i]) for i in range(n)) / float(n)
 
 def jackknife_var(x, func, num_blocks=100):
-    """ Jackknife estimate of the variance of the estimator function. """
+    """Jackknife estimiate of the variance of the estimator function."""
     n = len(x)
     block_size = n // num_blocks
     idx = np.arange(0, n, block_size)
     j_est = jackknife(x, func)
-    return (n - 1) / (n + 0.) * np.sum(
-        (func(x[idx!=i]) - j_est)**2.0 for i in range(n)
-    )
+    return (n - 1) / (n + 0.) * np.sum((func(x[idx!=i]) - j_est)**2.0 for i in
+                                      range(n))
 
 def jackknife_err(y_i, y_full, num_blocks):
-    if type(y_i) == list:
+    if isinstance(y_i, list):
         y_i = np.array(y_i)
-    if type(y_full) == list:
+    if isinstance(y_full, list):
         y_full = np.array(y_full)
     try:
-        err = np.sqrt((num_blocks - 1) * np.sum((y_i - y_full)**2) /
-                      num_blocks)
+        err = np.sqrt((num_blocks - 1) * np.sum((y_i - y_full)**2) / num_blocks)
     except ValueError:
-        print("y_i.shape: {}, y_full.shape: {}".format(y_i.shape,
-                                                       y_full.shape))
-        raise
+        raise ValueError(f"y_i.shape: {y_i.shape}, y_full.shape:"
+                         f"{y_full.shape}")
     return err
 
-
 def jackknife_resampling(data):
+    """Performs jackknife resampling on numpy arrays."""
+
     """
     Performs jackknife resampling on numpy arrays.
     Parameters
@@ -200,4 +150,3 @@ def jackknife_stats(data, statistic):
     #  estimate = stat_data - bias
 
     return estimate, bias, std_err
-
